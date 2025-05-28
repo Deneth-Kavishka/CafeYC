@@ -1,0 +1,41 @@
+<?php
+function checkAuth($required_role = null) {
+    if (!isset($_SESSION['user_id'])) {
+        header('Location: /auth/login.php');
+        exit;
+    }
+    
+    if ($required_role && $_SESSION['role'] !== $required_role && $_SESSION['role'] !== 'admin') {
+        header('Location: /auth/login.php?error=insufficient_permissions');
+        exit;
+    }
+    
+    return true;
+}
+
+function getUserRole() {
+    return $_SESSION['role'] ?? null;
+}
+
+function isLoggedIn() {
+    return isset($_SESSION['user_id']);
+}
+
+function redirectByRole($role) {
+    switch($role) {
+        case 'admin':
+            return '/admin/dashboard.php';
+        case 'cashier':
+            return '/cashier/dashboard.php';
+        case 'kitchen':
+            return '/kitchen/dashboard.php';
+        case 'inventory':
+            return '/inventory/dashboard.php';
+        case 'delivery':
+            return '/delivery/dashboard.php';
+        case 'customer':
+        default:
+            return '/customer/dashboard.php';
+    }
+}
+?>

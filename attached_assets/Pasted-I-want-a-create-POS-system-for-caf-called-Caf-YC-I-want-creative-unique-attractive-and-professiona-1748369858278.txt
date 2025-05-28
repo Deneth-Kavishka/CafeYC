@@ -1,0 +1,36 @@
+I want a create POS system for café called CaféYC. I want creative unique attractive and professional web application POS system for this! Because this is use in real-world! Also this is not only pos system this similar like e commerce platform. Because this have customer side and seller side also. This have some main login roles called cashier, kitchen, store(Inventory), delivery and customer. Customer mainly can select items from store and add them to cart and conform their order through the confirm order in cart and this only have cash on delivery or pickin. Also cashier can add discounts and all full total with deliver charges if customer use cash on delivery! Use Sri lankan all district! Shop base location is Mathale Town. 
+
+I can give main needed components lists and also you can add matching another features and components to this. Use creative features and use "HTML,CSS,Bootsrap,JS and backend for PHP and use MySQL for database" to develop this project. Use matching images and assets.  Create correctly all backend buddy. 
+
+Components list: Customer Registration 
+Customer Login 
+Home Page 
+Home Page 
+Shop Page 
+cart page 
+checkout page 
+My Order Page 
+Feedback Page 
+Admin Login 
+Admin Dashboard 
+Products 
+Add Product 
+Add Category 
+Add Brand and Supplier 
+Orders Page Add Home Slider 
+Add Hot Deal 
+categories table 
+products table
+ users table 
+ suppliers table 
+carts table 
+customer address table 
+hot deals table 
+brands table 
+orders tables 
+order items table review rating table 
+sliders table 
+Invoice 
+
+
+And after you develop this give me a step by step guide to how to implement and run this project correctly in my working device! And specially I need nice admin dashboard with analytic vibe and out of my given roles have their own functions and mainly admin can do this every thing with add items to store through admin dashboard! Create item card creative and add some inbuild samples to every needed things and other needed things admin can add to store and then them need show in store and other every needed areas. Create this application matching and super accurate way.

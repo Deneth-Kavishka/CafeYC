@@ -1,0 +1,3 @@
+<?php
+echo "CaféYC is working!";
+?>
