@@ -123,7 +123,7 @@ $sliders = $stmt->fetchAll();
                             <h5 class="card-title"><?php echo htmlspecialchars($product['name']); ?></h5>
                             <p class="card-text text-muted flex-grow-1"><?php echo htmlspecialchars($product['description']); ?></p>
                             <div class="d-flex justify-content-between align-items-center">
-                                <span class="fs-5 fw-bold text-primary">$<?php echo number_format($product['price'], 2); ?></span>
+                                <span class="fs-5 fw-bold text-primary">LKR<?php echo number_format($product['price'], 2); ?></span>
                                 <button class="btn btn-primary btn-sm add-to-cart" data-product-id="<?php echo $product['id']; ?>">
                                     <i class="fas fa-cart-plus"></i>
                                 </button>

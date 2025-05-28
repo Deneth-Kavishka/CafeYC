@@ -28,11 +28,14 @@ $where_clause = implode(' AND ', $where_conditions);
 $stmt = $pdo->prepare("
     SELECT p.*, c.name as category_name,
            COALESCE(hd.discount_percentage, 0) as discount_percentage,
-           CASE WHEN hd.id IS NOT NULL THEN 1 ELSE 0 END as has_deal
+           CASE WHEN hd.id IS NOT NULL THEN 1 ELSE 0 END as has_deal,
+           COALESCE(AVG(f.rating), 0) as rating
     FROM products p 
     LEFT JOIN categories c ON p.category_id = c.id 
     LEFT JOIN hot_deals hd ON p.id = hd.product_id AND hd.is_active = 1 AND hd.end_date > NOW()
+    LEFT JOIN feedback f ON p.id = f.product_id
     WHERE $where_clause 
+    GROUP BY p.id
     ORDER BY p.name
 ");
 $stmt->execute($params);
@@ -130,13 +133,13 @@ $page_title = "Shop - CaféYC";
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <?php if ($product['has_deal']): ?>
                                         <div>
-                                            <span class="text-decoration-line-through text-muted">$<?php echo number_format($product['price'], 2); ?></span>
+                                            <span class="text-decoration-line-through text-muted">LKR<?php echo number_format($product['price'], 2); ?></span>
                                             <span class="fs-5 fw-bold text-primary ms-1">
-                                                $<?php echo number_format($product['price'] * (1 - $product['discount_percentage']/100), 2); ?>
+                                                LKR <?php echo number_format($product['price'] * (1 - $product['discount_percentage']/100), 2); ?>
                                             </span>
                                         </div>
                                     <?php else: ?>
-                                        <span class="fs-5 fw-bold text-primary">$<?php echo number_format($product['price'], 2); ?></span>
+                                        <span class="fs-5 fw-bold text-primary">LKR <?php echo number_format($product['price'], 2); ?></span>
                                     <?php endif; ?>
                                     
                                     <div class="d-flex align-items-center">
