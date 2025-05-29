@@ -167,27 +167,32 @@ class CafeYCCart {
         }
       }
 
-      // Update quantity
-      if (e.target.matches(".quantity-btn")) {
+      // Update quantity for cart page (- and + icons)
+      const updateBtn = e.target.closest(".update-quantity");
+      if (updateBtn) {
         e.preventDefault();
-        const productId = e.target.dataset.productId;
-        const action = e.target.dataset.action;
-        const input = document.querySelector(
-          `input[data-product-id="${productId}"]`
-        );
-
-        if (input) {
-          let currentQty = parseInt(input.value) || 0;
-          let newQty = action === "increase" ? currentQty + 1 : currentQty - 1;
-
-          if (newQty < 0) newQty = 0;
-
-          input.value = newQty;
-          this.updateQuantity(productId, newQty);
-
-          // Update row total
-          this.updateRowTotal(productId, newQty);
-        }
+        const productId = updateBtn.dataset.productId;
+        const action = updateBtn.dataset.action;
+        // Find the quantity span in the same cart-item row
+        // Use .cart-item then .fw-bold that is not inside a button
+        const cartItem = updateBtn.closest(".cart-item");
+        // Find all .fw-bold spans in this cart-item, but skip those inside buttons
+        let qtySpan = null;
+        cartItem.querySelectorAll("span.fw-bold").forEach((span) => {
+          if (!span.closest("button")) qtySpan = span;
+        });
+        if (!qtySpan) return;
+        let qty = parseInt(qtySpan.textContent.trim());
+        if (action === "increase") qty++;
+        if (action === "decrease") qty--;
+        if (qty < 1) qty = 1;
+        fetch("cart.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: `action=update&product_id=${productId}&quantity=${qty}`,
+        })
+          .then((res) => res.json())
+          .then(() => location.reload());
       }
     });
 

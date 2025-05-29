@@ -259,8 +259,13 @@ $page_title = "My Orders - CaféYC";
                                         <a href="?view=<?php echo $order['id']; ?>" class="btn btn-sm btn-outline-primary me-1">
                                             <i class="fas fa-eye"></i> View
                                         </a>
-                                        <a href="../invoice/generate.php?order_id=<?php echo $order['id']; ?>" 
-                                           class="btn btn-sm btn-outline-secondary" target="_blank">
+                                        <a href="../invoice/invoice.php?order_id=<?php echo $order['id']; ?>" 
+                                           class="btn btn-sm btn-outline-secondary" target="_blank" title="Print Invoice">
+                                            <i class="fas fa-print"></i>
+                                        </a>
+                                        <a href="../invoice/invoice.php?order_id=<?php echo $order['id']; ?>&download=1" 
+                                           class="btn btn-sm btn-outline-success" title="Download Invoice"
+                                           download="invoice_<?php echo str_pad($order['id'], 6, '0', STR_PAD_LEFT); ?>.html">
                                             <i class="fas fa-download"></i>
                                         </a>
                                     </td>
