@@ -23,14 +23,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 // Get orders with customer information
 $stmt = $pdo->prepare("
     SELECT o.*, u.name as customer_name, u.email as customer_email, u.phone as customer_phone,
-           ca.address as delivery_address
+        (SELECT SUM(quantity) FROM order_items WHERE order_id = o.id) as total_items
     FROM orders o 
     JOIN users u ON o.user_id = u.id 
-    LEFT JOIN customer_addresses ca ON o.delivery_address_id = ca.id
     ORDER BY o.created_at DESC
 ");
 $stmt->execute();
 $orders = $stmt->fetchAll();
+
+// Fetch order items for each order in the list (with product name)
+$order_items_map = [];
+if ($orders) {
+    $order_ids = array_column($orders, 'id');
+    $in = str_repeat('?,', count($order_ids) - 1) . '?';
+    $stmt = $pdo->prepare("
+        SELECT oi.order_id, p.name as product_name, oi.quantity
+        FROM order_items oi
+        JOIN products p ON oi.product_id = p.id
+        WHERE oi.order_id IN ($in)
+    ");
+    $stmt->execute($order_ids);
+    foreach ($stmt->fetchAll() as $item) {
+        $order_items_map[$item['order_id']][] = $item;
+    }
+}
 
 // Get order details if viewing specific order
 $order_details = null;
@@ -38,11 +54,9 @@ if (isset($_GET['view'])) {
     $order_id = $_GET['view'];
     
     $stmt = $pdo->prepare("
-        SELECT o.*, u.name as customer_name, u.email as customer_email, u.phone as customer_phone,
-               ca.address as delivery_address
+        SELECT o.*, u.name as customer_name, u.email as customer_email, u.phone as customer_phone
         FROM orders o 
         JOIN users u ON o.user_id = u.id 
-        LEFT JOIN customer_addresses ca ON o.delivery_address_id = ca.id
         WHERE o.id = ?
     ");
     $stmt->execute([$order_id]);
@@ -178,17 +192,17 @@ $page_title = "Orders Management - CaféYC Admin";
                                         <option value="cancelled" <?php echo $order_details['status'] === 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
                                     </select>
                                 </form>
-                                <a href="../invoice/generate.php?order_id=<?php echo $order_details['id']; ?>" 
-                                   class="btn btn-sm btn-outline-primary" target="_blank">
+                                <!-- Invoice Button triggers modal -->
+                                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#invoiceModal">
                                     <i class="fas fa-print me-1"></i>Invoice
-                                </a>
+                                </button>
                             </div>
                         </div>
                         <div class="card-body">
                             <div class="row mb-4">
                                 <div class="col-md-6">
                                     <h6 class="fw-bold">Order Information</h6>
-                                    <p class="mb-1"><strong>Order Number:</strong> <?php echo htmlspecialchars($order_details['order_number']); ?></p>
+                                    <p class="mb-1"><strong>Order Number:</strong> <?php echo '#' . str_pad($order_details['id'], 6, '0', STR_PAD_LEFT); ?></p>
                                     <p class="mb-1"><strong>Date:</strong> <?php echo date('M j, Y g:i A', strtotime($order_details['created_at'])); ?></p>
                                     <p class="mb-1"><strong>Status:</strong> 
                                         <?php
@@ -241,33 +255,135 @@ $page_title = "Orders Management - CaféYC Admin";
                                                 </div>
                                             </td>
                                             <td><?php echo $item['quantity']; ?></td>
-                                            <td>$<?php echo number_format($item['unit_price'], 2); ?></td>
-                                            <td class="text-end">$<?php echo number_format($item['total_price'], 2); ?></td>
+                                            <td>LKR <?php echo number_format($item['unit_price'], 2); ?></td>
+                                            <td class="text-end">LKR <?php echo number_format($item['total_price'], 2); ?></td>
                                         </tr>
                                         <?php endforeach; ?>
                                     </tbody>
                                     <tfoot>
                                         <tr>
                                             <td colspan="3" class="text-end"><strong>Subtotal:</strong></td>
-                                            <td class="text-end">$<?php echo number_format($order_details['subtotal'], 2); ?></td>
+                                            <td class="text-end">LKR <?php echo number_format($order_details['subtotal'], 2); ?></td>
                                         </tr>
                                         <tr>
                                             <td colspan="3" class="text-end"><strong>Tax:</strong></td>
-                                            <td class="text-end">$<?php echo number_format($order_details['tax_amount'], 2); ?></td>
+                                            <td class="text-end">LKR <?php echo number_format($order_details['tax_amount'], 2); ?></td>
                                         </tr>
                                         <tr>
                                             <td colspan="3" class="text-end"><strong>Delivery Fee:</strong></td>
-                                            <td class="text-end">$<?php echo number_format($order_details['delivery_fee'], 2); ?></td>
+                                            <td class="text-end">LKR <?php echo number_format($order_details['delivery_fee'] ?? 0, 2); ?></td>
                                         </tr>
                                         <tr class="table-light">
                                             <td colspan="3" class="text-end"><strong>Total Amount:</strong></td>
-                                            <td class="text-end"><strong>$<?php echo number_format($order_details['total_amount'], 2); ?></strong></td>
+                                            <td class="text-end"><strong>LKR <?php echo number_format($order_details['total_amount'], 2); ?></strong></td>
                                         </tr>
                                     </tfoot>
                                 </table>
                             </div>
                         </div>
                     </div>
+
+                    <!-- Invoice Modal -->
+                    <div class="modal fade" id="invoiceModal" tabindex="-1" aria-labelledby="invoiceModalLabel" aria-hidden="true">
+                      <div class="modal-dialog modal-lg modal-dialog-centered">
+                        <div class="modal-content">
+                          <div class="modal-header">
+                            <h5 class="modal-title" id="invoiceModalLabel">Invoice - Order #<?php echo str_pad($order_details['id'], 6, '0', STR_PAD_LEFT); ?></h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                          </div>
+                          <div class="modal-body" id="invoice-content">
+                            <div class="container">
+                                <div class="row mb-2">
+                                    <div class="col-6">
+                                        <h4 class="fw-bold mb-1">CaféYC</h4>
+                                        <div>Colombo, Sri Lanka</div>
+                                        <div>+94 77 123 4567</div>
+                                        <div>info@cafeyc.com</div>
+                                    </div>
+                                    <div class="col-6 text-end">
+                                        <h5>Invoice</h5>
+                                        <div><strong>Date:</strong> <?php echo date('Y-m-d H:i', strtotime($order_details['created_at'])); ?></div>
+                                        <div><strong>Order #:</strong> <?php echo str_pad($order_details['id'], 6, '0', STR_PAD_LEFT); ?></div>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="row mb-2">
+                                    <div class="col-6">
+                                        <strong>Bill To:</strong><br>
+                                        <?php echo htmlspecialchars($order_details['customer_name']); ?><br>
+                                        <?php echo htmlspecialchars($order_details['customer_email']); ?><br>
+                                        <?php echo htmlspecialchars($order_details['customer_phone']); ?><br>
+                                        <?php echo nl2br(htmlspecialchars($order_details['delivery_address'])); ?>
+                                    </div>
+                                    <div class="col-6 text-end">
+                                        <strong>Status:</strong> <?php echo ucfirst($order_details['status']); ?><br>
+                                        <strong>Payment:</strong> <?php echo ucfirst($order_details['payment_method']); ?>
+                                    </div>
+                                </div>
+                                <hr>
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Product</th>
+                                            <th class="text-end">Qty</th>
+                                            <th class="text-end">Unit Price</th>
+                                            <th class="text-end">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($order_items as $idx => $item): ?>
+                                        <tr>
+                                            <td><?php echo $idx + 1; ?></td>
+                                            <td><?php echo htmlspecialchars($item['product_name']); ?></td>
+                                            <td class="text-end"><?php echo $item['quantity']; ?></td>
+                                            <td class="text-end">LKR <?php echo number_format($item['unit_price'], 2); ?></td>
+                                            <td class="text-end">LKR <?php echo number_format($item['total_price'], 2); ?></td>
+                                        </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                    <tfoot>
+                                        <tr>
+                                            <td colspan="4" class="text-end"><strong>Subtotal:</strong></td>
+                                            <td class="text-end">LKR <?php echo number_format($order_details['subtotal'], 2); ?></td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="4" class="text-end"><strong>Tax:</strong></td>
+                                            <td class="text-end">LKR <?php echo number_format($order_details['tax_amount'], 2); ?></td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="4" class="text-end"><strong>Discount:</strong></td>
+                                            <td class="text-end">LKR <?php echo number_format($order_details['discount_amount'], 2); ?></td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="4" class="text-end"><strong>Total:</strong></td>
+                                            <td class="text-end"><strong>LKR <?php echo number_format($order_details['total_amount'], 2); ?></strong></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                                <div class="text-center mt-3">
+                                    <small>Thank you for your order!</small>
+                                </div>
+                            </div>
+                          </div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-primary" onclick="printInvoice()">Print</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <script>
+                    function printInvoice() {
+                        var printContents = document.getElementById('invoice-content').innerHTML;
+                        var originalContents = document.body.innerHTML;
+                        document.body.innerHTML = printContents;
+                        window.print();
+                        document.body.innerHTML = originalContents;
+                        location.reload(); // reload to restore JS and modal state
+                    }
+                    </script>
                 <?php else: ?>
                     <!-- Orders List -->
                     <div class="card">
@@ -285,6 +401,7 @@ $page_title = "Orders Management - CaféYC Admin";
                                             <th>Customer</th>
                                             <th>Date</th>
                                             <th>Items</th>
+                                            <th>Qty</th>
                                             <th>Total</th>
                                             <th>Status</th>
                                             <th>Actions</th>
@@ -301,8 +418,19 @@ $page_title = "Orders Management - CaféYC Admin";
                                                 </div>
                                             </td>
                                             <td><?php echo date('M j, Y g:i A', strtotime($order['created_at'])); ?></td>
-                                            <td><?php echo $order['total_items']; ?> items</td>
-                                            <td class="fw-bold">$<?php echo number_format($order['total_amount'], 2); ?></td>
+                                            <td>
+                                                <?php
+                                                if (!empty($order_items_map[$order['id']])) {
+                                                    foreach ($order_items_map[$order['id']] as $item) {
+                                                        echo htmlspecialchars($item['product_name']) . '</span><br>';
+                                                    }
+                                                } else {
+                                                    echo '<span class="text-muted">-</span>';
+                                                }
+                                                ?>
+                                            </td>
+                                            <td><?php echo $order['total_items']; ?></td>
+                                            <td class="fw-bold">LKR <?php echo number_format($order['total_amount'], 2); ?></td>
                                             <td>
                                                 <?php
                                                 $status_class = match($order['status']) {

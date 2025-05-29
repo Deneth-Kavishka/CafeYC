@@ -26,7 +26,7 @@ $stmt = $pdo->query("
     SELECT p.name, p.image_url,
            SUM(oi.quantity) as total_sold,
            SUM(oi.total_price) as revenue,
-           AVG(p.rating) as avg_rating
+           (SELECT ROUND(AVG(f.rating), 1) FROM feedback f WHERE f.product_id = p.id) as avg_rating
     FROM products p
     JOIN order_items oi ON p.id = oi.product_id
     JOIN orders o ON oi.order_id = o.id
@@ -205,7 +205,7 @@ $extra_css = ["https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.css"];
                             <div class="card-body">
                                 <div class="d-flex align-items-center">
                                     <div class="flex-grow-1">
-                                        <h3 class="fw-bold mb-0">$<?php echo number_format($customer_analytics['avg_customer_value'] ?? 0, 2); ?></h3>
+                                        <h3 class="fw-bold mb-0">LKR <?php echo number_format($customer_analytics['avg_customer_value'] ?? 0, 2); ?></h3>
                                         <p class="mb-0">Avg Customer Value</p>
                                         <small class="opacity-75">Lifetime value</small>
                                     </div>
@@ -306,7 +306,7 @@ $extra_css = ["https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.css"];
                                                     </div>
                                                 </td>
                                                 <td><?php echo $product['total_sold']; ?></td>
-                                                <td>$<?php echo number_format($product['revenue'], 2); ?></td>
+                                                <td>LKR <?php echo number_format($product['revenue'], 2); ?></td>
                                                 <td>
                                                     <i class="fas fa-star text-warning"></i>
                                                     <?php echo number_format($product['avg_rating'], 1); ?>
@@ -347,7 +347,7 @@ $extra_css = ["https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.css"];
                                             <tr>
                                                 <td><?php echo htmlspecialchars($category['name']); ?></td>
                                                 <td><?php echo $category['total_sold']; ?></td>
-                                                <td>$<?php echo number_format($category['revenue'], 2); ?></td>
+                                                <td>LKR <?php echo number_format($category['revenue'], 2); ?></td>
                                                 <td><?php echo number_format($share, 1); ?>%</td>
                                             </tr>
                                             <?php endforeach; ?>
@@ -413,7 +413,7 @@ $extra_css = ["https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.css"];
                     beginAtZero: true,
                     ticks: {
                         callback: function(value) {
-                            return '$' + value.toLocaleString();
+                            return 'LKR ' + value.toLocaleString();
                         }
                     }
                 }
@@ -498,7 +498,7 @@ $extra_css = ["https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.css"];
                     },
                     ticks: {
                         callback: function(value) {
-                            return '$' + value;
+                            return 'LKR ' + value;
                         }
                     }
                 }

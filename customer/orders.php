@@ -7,11 +7,9 @@ checkAuth('customer');
 
 // Get user orders
 $stmt = $pdo->prepare("
-    SELECT o.*, ca.address as delivery_address 
-    FROM orders o 
-    LEFT JOIN customer_addresses ca ON o.delivery_address_id = ca.id 
-    WHERE o.user_id = ? 
-    ORDER BY o.created_at DESC
+    SELECT * FROM orders 
+    WHERE user_id = ? 
+    ORDER BY created_at DESC
 ");
 $stmt->execute([$_SESSION['user_id']]);
 $orders = $stmt->fetchAll();
@@ -22,10 +20,8 @@ if (isset($_GET['view'])) {
     $order_id = $_GET['view'];
     
     $stmt = $pdo->prepare("
-        SELECT o.*, ca.address as delivery_address 
-        FROM orders o 
-        LEFT JOIN customer_addresses ca ON o.delivery_address_id = ca.id 
-        WHERE o.id = ? AND o.user_id = ?
+        SELECT * FROM orders 
+        WHERE id = ? AND user_id = ?
     ");
     $stmt->execute([$order_id, $_SESSION['user_id']]);
     $order_details = $stmt->fetch();

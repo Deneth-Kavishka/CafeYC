@@ -26,9 +26,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Get products with categories
+// Get products with categories and average rating from feedback
 $stmt = $pdo->prepare("
-    SELECT p.*, c.name as category_name, b.name as brand_name 
+    SELECT 
+        p.*, 
+        c.name as category_name, 
+        b.name as brand_name,
+        (SELECT ROUND(AVG(f.rating), 1) FROM feedback f WHERE f.product_id = p.id) as rating
     FROM products p 
     LEFT JOIN categories c ON p.category_id = c.id 
     LEFT JOIN brands b ON p.brand_id = b.id 
@@ -166,11 +170,11 @@ $page_title = "Products Management - CaféYC Admin";
                                         </td>
                                         <td><?php echo htmlspecialchars($product['category_name']); ?></td>
                                         <td><?php echo htmlspecialchars($product['brand_name']); ?></td>
-                                        <td class="fw-bold">$<?php echo number_format($product['price'], 2); ?></td>
+                                        <td class="fw-bold">LKR <?php echo number_format($product['price'], 2); ?></td>
                                         <td>
                                             <div class="d-flex align-items-center">
                                                 <i class="fas fa-star text-warning me-1"></i>
-                                                <?php echo number_format($product['rating'], 1); ?>
+                                                <?php echo $product['rating'] !== null ? number_format($product['rating'], 1) : '-'; ?>
                                             </div>
                                         </td>
                                         <td>

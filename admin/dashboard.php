@@ -48,12 +48,17 @@ $stmt = $pdo->prepare("
 $stmt->execute();
 $recent_orders = $stmt->fetchAll();
 
-// Fetch order items for each recent order
+// Fetch order items for each recent order (with product name)
 $order_items_map = [];
 if ($recent_orders) {
     $order_ids = array_column($recent_orders, 'id');
     $in = str_repeat('?,', count($order_ids) - 1) . '?';
-    $stmt = $pdo->prepare("SELECT order_id, item_name, quantity FROM order_items WHERE order_id IN ($in)");
+    $stmt = $pdo->prepare("
+        SELECT oi.order_id, p.name as product_name, oi.quantity
+        FROM order_items oi
+        JOIN products p ON oi.product_id = p.id
+        WHERE oi.order_id IN ($in)
+    ");
     $stmt->execute($order_ids);
     foreach ($stmt->fetchAll() as $item) {
         $order_items_map[$item['order_id']][] = $item;
@@ -329,7 +334,7 @@ $extra_css = [
                                                     <?php
                                                     if (!empty($order_items_map[$order['id']])) {
                                                         foreach ($order_items_map[$order['id']] as $item) {
-                                                            echo htmlspecialchars($item['item_name']) . '</span><br>';
+                                                            echo htmlspecialchars($item['product_name']) . '</span><br>';
                                                         }
                                                     } else {
                                                         echo '<span class="text-muted">-</span>';
