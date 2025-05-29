@@ -91,7 +91,8 @@ $sliders = $stmt->fetchAll();
                                         LKR <?php echo number_format($deal['price'] * (1 - $deal['discount_percentage']/100), 2); ?>
                                     </span>
                                 </div>
-                                <button class="btn btn-primary btn-sm add-to-cart" data-product-id="<?php echo $deal['id']; ?>">
+                                <button class="btn btn-primary btn-sm add-to-cart"
+                                    data-product-id="<?php echo $deal['id']; ?>">
                                     <i class="fas fa-cart-plus"></i>
                                 </button>
                             </div>
@@ -124,7 +125,9 @@ $sliders = $stmt->fetchAll();
                             <p class="card-text text-muted flex-grow-1"><?php echo htmlspecialchars($product['description']); ?></p>
                             <div class="d-flex justify-content-between align-items-center">
                                 <span class="fs-5 fw-bold text-primary">LKR<?php echo number_format($product['price'], 2); ?></span>
-                                <button class="btn btn-primary btn-sm add-to-cart" data-product-id="<?php echo $product['id']; ?>">
+                                <button class="btn btn-primary btn-sm add-to-cart" 
+                                    data-product-id="<?php echo $product['id']; ?>" 
+                                    onclick="event.preventDefault(); if(window.cafeCart){window.cafeCart.addToCart('<?php echo $product['id']; ?>', 1);}">
                                     <i class="fas fa-cart-plus"></i>
                                 </button>
                             </div>

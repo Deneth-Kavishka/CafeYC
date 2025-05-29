@@ -5,6 +5,51 @@ require_once '../config/auth.php';
 
 checkAuth('customer');
 
+// --- AJAX Cart Actions ---
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    // Always sync cart session with cookie/localStorage before updating (for ALL actions)
+    if (isset($_COOKIE['cafeyc_cart'])) {
+        $cart = json_decode($_COOKIE['cafeyc_cart'], true);
+        if (is_array($cart)) {
+            $_SESSION['cart'] = $cart;
+        }
+    }
+
+    if ($_POST['action'] === 'add' && isset($_POST['product_id'])) {
+        $pid = (int)$_POST['product_id'];
+        $qty = isset($_POST['quantity']) ? (int)$_POST['quantity'] : 1;
+        if (!isset($_SESSION['cart'][$pid])) {
+            $_SESSION['cart'][$pid] = $qty > 0 ? $qty : 1;
+        } else {
+            $_SESSION['cart'][$pid] += $qty > 0 ? $qty : 1;
+        }
+        echo json_encode(['success' => true]);
+        exit;
+    }
+    if ($_POST['action'] === 'update' && isset($_POST['product_id'], $_POST['quantity'])) {
+        $pid = (int)$_POST['product_id'];
+        $qty = (int)$_POST['quantity'];
+        if ($qty > 0) {
+            $_SESSION['cart'][$pid] = $qty;
+        } else {
+            unset($_SESSION['cart'][$pid]);
+        }
+        echo json_encode(['success' => true]);
+        exit;
+    }
+    if ($_POST['action'] === 'remove' && isset($_POST['product_id'])) {
+        $pid = (int)$_POST['product_id'];
+        unset($_SESSION['cart'][$pid]);
+        echo json_encode(['success' => true]);
+        exit;
+    }
+    if ($_POST['action'] === 'clear') {
+        unset($_SESSION['cart']);
+        echo json_encode(['success' => true]);
+        exit;
+    }
+}
+
 // --- Cart session sync from cookie/localStorage ---
 if (
     isset($_COOKIE['cafeyc_cart']) &&
@@ -19,6 +64,7 @@ if (
 $cart_items = [];
 $total = 0;
 
+// Calculate cart items and total
 if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])) {
     $product_ids = array_keys($_SESSION['cart']);
     // Prevent SQL error if cart is empty
@@ -55,6 +101,12 @@ if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])) {
     }
 }
 
+// Set delivery fee logic
+$delivery_fee = 200.00;
+if ($total >= 5000) {
+    $delivery_fee = 0.00;
+}
+
 $page_title = "Shopping Cart - CaféYC";
 ?>
 
@@ -84,7 +136,17 @@ $page_title = "Shopping Cart - CaféYC";
             <div class="col-lg-8">
                 <div class="card">
                     <div class="card-header">
-                        <h5 class="mb-0">Cart Items (<?php echo array_sum($_SESSION['cart']); ?> items)</h5>
+                        <h5 class="mb-0">
+                            Cart Items (
+                            <?php
+                                // Always recalculate the total quantity from $cart_items for accuracy
+                                $cart_count = 0;
+                                foreach ($cart_items as $item) {
+                                    $cart_count += $item['quantity'];
+                                }
+                                echo $cart_count;
+                            ?> items)
+                        </h5>
                     </div>
                     <div class="card-body p-0">
                         <?php foreach ($cart_items as $item): ?>
@@ -165,12 +227,16 @@ $page_title = "Shopping Cart - CaféYC";
                         </div>
                         <div class="d-flex justify-content-between mb-3">
                             <span>Delivery Fee:</span>
-                            <span class="text-end">LKR <?php echo number_format($order['delivery_amount'], 2); ?></span>
+                            <span class="text-end">
+                                LKR <?php echo number_format($delivery_fee, 2); ?>
+                            </span>
                         </div>
                         <hr>
                         <div class="d-flex justify-content-between mb-4">
                             <span class="fw-bold fs-5">Total:</span>
-                            <span class="fw-bold fs-5 text-primary">LKR <?php echo number_format($total + ($total * 0.01) + 200, 2); ?></span>
+                            <span class="fw-bold fs-5 text-primary">
+                                LKR <?php echo number_format($total + ($total * 0.01) + $delivery_fee, 2); ?>
+                            </span>
                         </div>
                         
                         <div class="d-grid">

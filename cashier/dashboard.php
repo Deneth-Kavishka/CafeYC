@@ -133,7 +133,7 @@ $page_title = "Cashier Dashboard - CaféYC";
                             <div class="card-body">
                                 <div class="d-flex align-items-center">
                                     <div class="flex-grow-1">
-                                        <h2 class="fw-bold mb-0">$<?php echo number_format($today_sales, 2); ?></h2>
+                                        <h2 class="fw-bold mb-0">LKR <?php echo number_format($today_sales, 2); ?></h2>
                                         <p class="mb-0">Today's Sales</p>
                                     </div>
                                     <i class="fas fa-dollar-sign fa-2x opacity-75"></i>
@@ -268,7 +268,7 @@ $page_title = "Cashier Dashboard - CaféYC";
                                                     <td class="fw-bold">#<?php echo str_pad($order['id'], 6, '0', STR_PAD_LEFT); ?></td>
                                                     <td><?php echo htmlspecialchars($order['customer_name']); ?></td>
                                                     <td><?php echo date('g:i A', strtotime($order['created_at'])); ?></td>
-                                                    <td class="fw-bold">$<?php echo number_format($order['total_amount'], 2); ?></td>
+                                                    <td class="fw-bold">LKR <?php echo number_format($order['total_amount'], 2); ?></td>
                                                     <td>
                                                         <?php
                                                         $status_class = match($order['status']) {
@@ -314,7 +314,7 @@ $page_title = "Cashier Dashboard - CaféYC";
                                              class="rounded me-3" style="width: 40px; height: 40px; object-fit: cover;">
                                         <div class="flex-grow-1">
                                             <h6 class="mb-0"><?php echo htmlspecialchars($product['name']); ?></h6>
-                                            <small class="text-muted">$<?php echo number_format($product['price'], 2); ?></small>
+                                            <small class="text-muted">LKR <?php echo number_format($product['price'], 2); ?></small>
                                         </div>
                                         <button class="btn btn-sm btn-primary quick-add-product" 
                                                 data-product-id="<?php echo $product['id']; ?>">
@@ -361,7 +361,7 @@ $page_title = "Cashier Dashboard - CaféYC";
                             <p>Total Orders</p>
                         </div>
                         <div class="stat-box">
-                            <h3>$<?php echo number_format($today_sales, 2); ?></h3>
+                            <h3>LKR <?php echo number_format($today_sales, 2); ?></h3>
                             <p>Total Sales</p>
                         </div>
                         <div class="stat-box">

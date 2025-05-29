@@ -44,9 +44,42 @@ class CafeYCCart {
   }
 
   addToCart(productId, quantity = 1) {
+    // Update local cart
     this.cart[productId] = (this.cart[productId] || 0) + quantity;
     this.saveCart();
-    this.showCartMessage("Item added to cart successfully!", "success");
+
+    // Sync to server via AJAX for immediate PHP session update
+    fetch("cart.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `action=add&product_id=${productId}&quantity=${quantity}`,
+    })
+      .then((res) => res.json())
+      .then(() => {
+        this.updateCartUI();
+        this.showCartMessage(
+          "Item added to cart successfully!",
+          "success",
+          "top",
+          "center"
+        );
+      });
+
+    // Visual feedback
+    const button = document.querySelector(
+      `.add-to-cart[data-product-id="${productId}"]`
+    );
+    if (button) {
+      button.innerHTML = '<i class="fas fa-check"></i>';
+      button.classList.add("btn-success");
+      button.classList.remove("btn-primary");
+
+      setTimeout(() => {
+        button.innerHTML = '<i class="fas fa-cart-plus"></i>';
+        button.classList.remove("btn-success");
+        button.classList.add("btn-primary");
+      }, 1000);
+    }
   }
 
   removeFromCart(productId) {
@@ -82,19 +115,13 @@ class CafeYCCart {
   }
 
   updateCartUI() {
-    const cartBadge = document.querySelector(".cart-badge, .badge");
+    // Only update the navbar cart badge
+    const cartBadge = document.querySelector(".cart-badge");
     const cartCount = this.getCartCount();
 
     if (cartBadge) {
       cartBadge.textContent = cartCount;
       cartBadge.style.display = cartCount > 0 ? "flex" : "none";
-    }
-
-    // Update cart count in navigation
-    const navCartCount = document.querySelector(".nav-link .badge");
-    if (navCartCount) {
-      navCartCount.textContent = cartCount;
-      navCartCount.style.display = cartCount > 0 ? "inline" : "none";
     }
   }
 
@@ -174,6 +201,93 @@ class CafeYCCart {
         this.updateRowTotal(productId, quantity);
       }
     });
+
+    // Update quantity
+    document.addEventListener("DOMContentLoaded", function () {
+      // Update quantity
+      document.querySelectorAll(".update-quantity").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          const productId = this.dataset.productId;
+          const action = this.dataset.action;
+          const qtySpan = this.closest(".row").querySelector("span.fw-bold");
+          let qty = parseInt(qtySpan.textContent.trim());
+          if (action === "increase") qty++;
+          if (action === "decrease") qty--;
+          if (qty < 1) qty = 1;
+          fetch("cart.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: `action=update&product_id=${productId}&quantity=${qty}`,
+          })
+            .then((res) => res.json())
+            .then(() => location.reload());
+        });
+      });
+
+      // Remove from cart
+      document.querySelectorAll(".remove-from-cart").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          const productId = this.dataset.productId;
+          fetch("cart.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: `action=remove&product_id=${productId}`,
+          })
+            .then((res) => res.json())
+            .then(() => location.reload());
+        });
+      });
+
+      // Clear cart
+      const clearBtn = document.getElementById("clear-cart");
+      if (clearBtn) {
+        clearBtn.addEventListener("click", function () {
+          if (confirm("Are you sure you want to clear your cart?")) {
+            fetch("cart.php", {
+              method: "POST",
+              headers: { "Content-Type": "application/x-www-form-urlencoded" },
+              body: "action=clear",
+            })
+              .then((res) => res.json())
+              .then(() => location.reload());
+          }
+        });
+      }
+
+      // Add to cart (for recommended/products)
+      document.querySelectorAll(".add-to-cart").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          const productId = this.dataset.productId;
+          fetch("cart.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: `action=add&product_id=${productId}&quantity=1`,
+          })
+            .then((res) => res.json())
+            .then(() => location.reload());
+        });
+      });
+    });
+
+    // Clear cart (fix: always clear both localStorage/cookie and server)
+    document.addEventListener("click", (e) => {
+      if (e.target.matches("#clear-cart, #clear-cart *")) {
+        e.preventDefault();
+        if (confirm("Are you sure you want to clear your cart?")) {
+          // Clear local cart
+          this.clearCart();
+
+          // Also clear server-side cart via AJAX
+          fetch("cart.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: "action=clear",
+          })
+            .then((res) => res.json())
+            .then(() => location.reload());
+        }
+      }
+    });
   }
 
   updateRowTotal(productId, quantity) {
@@ -215,10 +329,22 @@ class CafeYCCart {
     if (totalElement) totalElement.textContent = `LKR ${grandTotal.toFixed(2)}`;
   }
 
-  showCartMessage(message, type = "success") {
+  showCartMessage(
+    message,
+    type = "success",
+    vertical = "top",
+    horizontal = "center"
+  ) {
     // Create toast notification
     const toast = document.createElement("div");
     toast.className = `toast align-items-center text-bg-${type} border-0`;
+    toast.style.position = "fixed";
+    toast.style.zIndex = 9999;
+    toast.style[vertical] = "20px";
+    toast.style[horizontal] = "0";
+    toast.style.left = "50%";
+    toast.style.transform = "translateX(-50%)";
+    toast.style.maxWidth = "350px";
     toast.innerHTML = `
             <div class="d-flex">
                 <div class="toast-body">
@@ -231,16 +357,7 @@ class CafeYCCart {
             </div>
         `;
 
-    // Add to toast container or create one
-    let toastContainer = document.querySelector(".toast-container");
-    if (!toastContainer) {
-      toastContainer = document.createElement("div");
-      toastContainer.className =
-        "toast-container position-fixed top-0 end-0 p-3";
-      document.body.appendChild(toastContainer);
-    }
-
-    toastContainer.appendChild(toast);
+    document.body.appendChild(toast);
 
     // Show toast
     const bsToast = new bootstrap.Toast(toast);
@@ -250,11 +367,19 @@ class CafeYCCart {
     toast.addEventListener("hidden.bs.toast", () => {
       toast.remove();
     });
+
+    // Auto remove after 2 seconds if not closed
+    setTimeout(() => {
+      if (toast.parentNode) toast.remove();
+    }, 2000);
   }
 
   clearCart() {
     this.cart = {};
-    this.saveCart();
+    localStorage.removeItem("cafeyc_cart");
+    document.cookie =
+      "cafeyc_cart=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    this.updateCartUI();
     this.showCartMessage("Cart cleared", "info");
   }
 }

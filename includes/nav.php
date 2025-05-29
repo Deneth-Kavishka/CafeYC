@@ -39,11 +39,10 @@ if (isLoggedIn() && isset($_SESSION['cart'])) {
                     <li class="nav-item">
                         <a class="nav-link position-relative" href="/cafeyc/customer/cart.php">
                             <i class="fas fa-shopping-cart"></i>
-                            <?php if ($cart_count > 0): ?>
-                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                    <?php echo $cart_count; ?>
-                                </span>
-                            <?php endif; ?>
+                            <span class="cart-badge position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                                  style="<?php echo $cart_count > 0 ? '' : 'display:none;'; ?>">
+                                <?php echo $cart_count; ?>
+                            </span>
                         </a>
                     </li>
                     <li class="nav-item dropdown">

@@ -7,7 +7,7 @@ checkAuth('customer');
 
 // Get user's completed orders for feedback
 $stmt = $pdo->prepare("
-    SELECT DISTINCT o.id, o.order_number, o.created_at, o.total_amount,
+    SELECT DISTINCT o.id, o.created_at, o.total_amount,
            CASE WHEN rr.id IS NOT NULL THEN 1 ELSE 0 END as has_review
     FROM orders o 
     LEFT JOIN order_items oi ON o.id = oi.order_id
@@ -29,6 +29,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->execute([$order_id, $_SESSION['user_id']]);
     
     if (!$stmt->fetch()) {
+        // Check if the 'review_ratings' table has a 'rating' column
+        // If not, you must add it to your database:
+        // ALTER TABLE review_ratings ADD COLUMN rating INT NOT NULL AFTER order_id;
+        // Also ensure the table exists and has the correct columns: user_id, order_id, rating, review, created_at
+
         $stmt = $pdo->prepare("
             INSERT INTO review_ratings (user_id, order_id, rating, review, created_at) 
             VALUES (?, ?, ?, ?, NOW())
@@ -62,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // Refresh orders list
     $stmt = $pdo->prepare("
-        SELECT DISTINCT o.id, o.order_number, o.created_at, o.total_amount,
+        SELECT DISTINCT o.id, o.created_at, o.total_amount,
                CASE WHEN rr.id IS NOT NULL THEN 1 ELSE 0 END as has_review
         FROM orders o 
         LEFT JOIN order_items oi ON o.id = oi.order_id
@@ -125,7 +130,7 @@ $page_title = "Feedback - CaféYC";
                             <h6 class="mb-0">Order #<?php echo str_pad($order['id'], 6, '0', STR_PAD_LEFT); ?></h6>
                             <small class="text-muted">
                                 <?php echo date('M j, Y', strtotime($order['created_at'])); ?> • 
-                                $<?php echo number_format($order['total_amount'], 2); ?>
+                                LKR <?php echo number_format($order['total_amount'], 2); ?>
                             </small>
                         </div>
                         <div>
@@ -167,13 +172,12 @@ $page_title = "Feedback - CaféYC";
                             <form method="POST">
                                 <div class="modal-body">
                                     <input type="hidden" name="order_id" value="<?php echo $order['id']; ?>">
-                                    
                                     <div class="mb-4">
                                         <label class="form-label fw-bold">Overall Rating</label>
                                         <div class="rating-container">
                                             <?php for ($i = 5; $i >= 1; $i--): ?>
                                                 <input type="radio" id="star<?php echo $i; ?>_<?php echo $order['id']; ?>" 
-                                                       name="rating" value="<?php echo $i; ?>" class="rating-input">
+                                                       name="rating" value="<?php echo $i; ?>" class="rating-input" required>
                                                 <label for="star<?php echo $i; ?>_<?php echo $order['id']; ?>" 
                                                        class="rating-label">
                                                     <i class="fas fa-star"></i>
