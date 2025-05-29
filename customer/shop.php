@@ -193,14 +193,14 @@ $page_title = "Shop - CaféYC";
                                             
                                             <?php if ($product['has_deal']): ?>
                                                 <div class="mb-2">
-                                                    <span class="text-decoration-line-through text-muted fs-5">$<?php echo number_format($product['price'], 2); ?></span>
+                                                    <span class="text-decoration-line-through text-muted fs-5">LKR <?php echo number_format($product['price'], 2); ?></span>
                                                     <span class="fs-4 fw-bold text-primary ms-2">
-                                                        $<?php echo number_format($product['price'] * (1 - $product['discount_percentage']/100), 2); ?>
+                                                        LKR <?php echo number_format($product['price'] * (1 - $product['discount_percentage']/100), 2); ?>
                                                     </span>
                                                     <span class="badge bg-danger ms-2"><?php echo $product['discount_percentage']; ?>% OFF</span>
                                                 </div>
                                             <?php else: ?>
-                                                <div class="fs-4 fw-bold text-primary mb-2">$<?php echo number_format($product['price'], 2); ?></div>
+                                                <div class="fs-4 fw-bold text-primary mb-2">LKR <?php echo number_format($product['price'], 2); ?></div>
                                             <?php endif; ?>
                                         </div>
                                         

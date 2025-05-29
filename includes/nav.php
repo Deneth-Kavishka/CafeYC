@@ -51,10 +51,11 @@ if (isLoggedIn() && isset($_SESSION['cart'])) {
                             <i class="fas fa-user"></i> <?php echo htmlspecialchars($_SESSION['name']); ?>
                         </a>
                         <ul class="dropdown-menu">
-                            <?php
-                            $dashboard_url = redirectByRole($_SESSION['role']);
-                            ?>
-                            <li><a class="dropdown-item" href="/cafeyc/<?php echo $dashboard_url; ?>">Dashboard</a></li>
+                            <li>
+                                <a class="dropdown-item" href="/cafeyc/customer/dashboard.php">
+                                    <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                                </a>
+                            </li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="/cafeyc/auth/logout.php">Logout</a></li>
                         </ul>

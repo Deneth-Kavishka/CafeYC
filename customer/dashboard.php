@@ -73,7 +73,7 @@ $page_title = "Customer Dashboard - CaféYC";
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="flex-grow-1">
-                            <h2 class="fw-bold mb-0">$<?php echo number_format($total_spent, 2); ?></h2>
+                            <h2 class="fw-bold mb-0">LKR <?php echo number_format($total_spent, 2); ?></h2>
                             <p class="mb-0">Total Spent</p>
                         </div>
                         <i class="fas fa-dollar-sign fa-2x opacity-75"></i>

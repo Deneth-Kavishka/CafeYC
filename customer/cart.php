@@ -5,38 +5,53 @@ require_once '../config/auth.php';
 
 checkAuth('customer');
 
+// --- Cart session sync from cookie/localStorage ---
+if (
+    isset($_COOKIE['cafeyc_cart']) &&
+    (!isset($_SESSION['cart']) || empty($_SESSION['cart']))
+) {
+    $cart = json_decode($_COOKIE['cafeyc_cart'], true);
+    if (is_array($cart)) {
+        $_SESSION['cart'] = $cart;
+    }
+}
+
 $cart_items = [];
 $total = 0;
 
 if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])) {
     $product_ids = array_keys($_SESSION['cart']);
-    $placeholders = str_repeat('?,', count($product_ids) - 1) . '?';
-    
-    $stmt = $pdo->prepare("
-        SELECT p.*, 
-               COALESCE(hd.discount_percentage, 0) as discount_percentage,
-               CASE WHEN hd.id IS NOT NULL THEN 1 ELSE 0 END as has_deal
-        FROM products p 
-        LEFT JOIN hot_deals hd ON p.id = hd.product_id AND hd.is_active = 1 AND hd.end_date > NOW()
-        WHERE p.id IN ($placeholders)
-    ");
-    $stmt->execute($product_ids);
-    $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
-    foreach ($products as $product) {
-        $quantity = $_SESSION['cart'][$product['id']];
-        $price = $product['has_deal'] 
-            ? $product['price'] * (1 - $product['discount_percentage']/100)
-            : $product['price'];
-        
-        $cart_items[] = [
-            'product' => $product,
-            'quantity' => $quantity,
-            'price' => $price,
-            'subtotal' => $price * $quantity
-        ];
-        
-        $total += $price * $quantity;
+    // Prevent SQL error if cart is empty
+    if (count($product_ids) > 0) {
+        $placeholders = str_repeat('?,', count($product_ids) - 1) . '?';
+        $stmt = $pdo->prepare("
+            SELECT p.*, 
+                   COALESCE(hd.discount_percentage, 0) as discount_percentage,
+                   CASE WHEN hd.id IS NOT NULL THEN 1 ELSE 0 END as has_deal
+            FROM products p 
+            LEFT JOIN hot_deals hd ON p.id = hd.product_id AND hd.is_active = 1 AND hd.end_date > NOW()
+            WHERE p.id IN ($placeholders)
+        ");
+        $stmt->execute($product_ids);
+        $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($products as $product) {
+            $quantity = isset($_SESSION['cart'][$product['id']]) ? $_SESSION['cart'][$product['id']] : 0;
+            if ($quantity <= 0) continue; // skip if somehow 0
+
+            $price = $product['has_deal'] 
+                ? $product['price'] * (1 - $product['discount_percentage']/100)
+                : $product['price'];
+
+            $cart_items[] = [
+                'product' => $product,
+                'quantity' => $quantity,
+                'price' => $price,
+                'subtotal' => $price * $quantity
+            ];
+
+            $total += $price * $quantity;
+        }
     }
 }
 
@@ -92,10 +107,10 @@ $page_title = "Shopping Cart - CaféYC";
                                         <div class="text-center">
                                             <?php if ($item['product']['has_deal']): ?>
                                                 <div class="text-decoration-line-through text-muted small">
-                                                    $<?php echo number_format($item['product']['price'], 2); ?>
+                                                    LKR <?php echo number_format($item['product']['price'], 2); ?>
                                                 </div>
                                             <?php endif; ?>
-                                            <div class="fw-bold">$<?php echo number_format($item['price'], 2); ?></div>
+                                            <div class="fw-bold">LKR <?php echo number_format($item['price'], 2); ?></div>
                                         </div>
                                     </div>
                                     <div class="col-md-2">
@@ -112,7 +127,7 @@ $page_title = "Shopping Cart - CaféYC";
                                         </div>
                                     </div>
                                     <div class="col-md-2 text-end">
-                                        <div class="fw-bold text-primary mb-2">$<?php echo number_format($item['subtotal'], 2); ?></div>
+                                        <div class="fw-bold text-primary mb-2">LKR <?php echo number_format($item['subtotal'], 2); ?></div>
                                         <button class="btn btn-sm btn-outline-danger remove-from-cart" 
                                                 data-product-id="<?php echo $item['product']['id']; ?>">
                                             <i class="fas fa-trash"></i>
@@ -142,20 +157,20 @@ $page_title = "Shopping Cart - CaféYC";
                     <div class="card-body">
                         <div class="d-flex justify-content-between mb-3">
                             <span>Subtotal:</span>
-                            <span class="fw-bold">$<?php echo number_format($total, 2); ?></span>
+                            <span class="fw-bold">LKR <?php echo number_format($total, 2); ?></span>
                         </div>
                         <div class="d-flex justify-content-between mb-3">
-                            <span>Tax (8%):</span>
-                            <span>$<?php echo number_format($total * 0.08, 2); ?></span>
+                            <span>Tax (1%):</span>
+                            <span>LKR <?php echo number_format($total * 0.01, 2); ?></span>
                         </div>
                         <div class="d-flex justify-content-between mb-3">
                             <span>Delivery Fee:</span>
-                            <span>$2.99</span>
+                            <span class="text-end">LKR <?php echo number_format($order['delivery_amount'], 2); ?></span>
                         </div>
                         <hr>
                         <div class="d-flex justify-content-between mb-4">
                             <span class="fw-bold fs-5">Total:</span>
-                            <span class="fw-bold fs-5 text-primary">$<?php echo number_format($total + ($total * 0.08) + 2.99, 2); ?></span>
+                            <span class="fw-bold fs-5 text-primary">LKR <?php echo number_format($total + ($total * 0.01) + 200, 2); ?></span>
                         </div>
                         
                         <div class="d-grid">
@@ -193,7 +208,7 @@ $page_title = "Shopping Cart - CaféYC";
                                      alt="<?php echo htmlspecialchars($product['name']); ?>">
                                 <div class="flex-grow-1">
                                     <h6 class="mb-0"><?php echo htmlspecialchars($product['name']); ?></h6>
-                                    <small class="text-muted">$<?php echo number_format($product['price'], 2); ?></small>
+                                    <small class="text-muted">LKR <?php echo number_format($product['price'], 2); ?></small>
                                 </div>
                                 <button class="btn btn-sm btn-outline-primary add-to-cart" 
                                         data-product-id="<?php echo $product['id']; ?>">

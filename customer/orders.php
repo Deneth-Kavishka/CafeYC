@@ -7,12 +7,14 @@ checkAuth('customer');
 
 // Get user orders
 $stmt = $pdo->prepare("
-    SELECT * FROM orders 
-    WHERE user_id = ? 
-    ORDER BY created_at DESC
+    SELECT o.*,
+        (SELECT COUNT(*) FROM order_items oi WHERE oi.order_id = o.id) as total_items
+    FROM orders o
+    WHERE o.user_id = ?
+    ORDER BY o.created_at DESC
 ");
 $stmt->execute([$_SESSION['user_id']]);
-$orders = $stmt->fetchAll();
+$orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Get order details if viewing specific order
 $order_details = null;
@@ -35,6 +37,23 @@ if (isset($_GET['view'])) {
         ");
         $stmt->execute([$order_id]);
         $order_items = $stmt->fetchAll();
+    }
+}
+
+// Get order items for all orders for the list view (for Items/Qty columns)
+$order_items_map = [];
+if ($orders) {
+    $order_ids = array_column($orders, 'id');
+    $in = str_repeat('?,', count($order_ids) - 1) . '?';
+    $stmt = $pdo->prepare("
+        SELECT oi.order_id, p.name as product_name, oi.quantity
+        FROM order_items oi
+        JOIN products p ON oi.product_id = p.id
+        WHERE oi.order_id IN ($in)
+    ");
+    $stmt->execute($order_ids);
+    foreach ($stmt->fetchAll() as $item) {
+        $order_items_map[$item['order_id']][] = $item;
     }
 }
 
@@ -87,7 +106,7 @@ $page_title = "My Orders - CaféYC";
                     <div class="row mb-4">
                         <div class="col-md-6">
                             <h6 class="fw-bold">Order Information</h6>
-                            <p class="mb-1"><strong>Order Number:</strong> <?php echo htmlspecialchars($order_details['order_number']); ?></p>
+                            <p class="mb-1"><strong>Order Number:</strong> <?php echo '#' . str_pad($order_details['id'], 6, '0', STR_PAD_LEFT); ?></p>
                             <p class="mb-1"><strong>Date:</strong> <?php echo date('M j, Y g:i A', strtotime($order_details['created_at'])); ?></p>
                             <p class="mb-1"><strong>Status:</strong> 
                                 <?php
@@ -137,34 +156,34 @@ $page_title = "My Orders - CaféYC";
                                         </div>
                                     </td>
                                     <td><?php echo $item['quantity']; ?></td>
-                                    <td>$<?php echo number_format($item['unit_price'], 2); ?></td>
-                                    <td class="text-end">$<?php echo number_format($item['total_price'], 2); ?></td>
+                                    <td>LKR <?php echo number_format($item['unit_price'], 2); ?></td>
+                                    <td class="text-end">LKR <?php echo number_format($item['total_price'], 2); ?></td>
                                 </tr>
                                 <?php endforeach; ?>
                             </tbody>
                             <tfoot>
                                 <tr>
                                     <td colspan="3" class="text-end"><strong>Subtotal:</strong></td>
-                                    <td class="text-end">$<?php echo number_format($order_details['subtotal'], 2); ?></td>
+                                    <td class="text-end">LKR <?php echo number_format($order_details['subtotal'], 2); ?></td>
                                 </tr>
                                 <tr>
                                     <td colspan="3" class="text-end"><strong>Tax:</strong></td>
-                                    <td class="text-end">$<?php echo number_format($order_details['tax_amount'], 2); ?></td>
+                                    <td class="text-end">LKR <?php echo number_format($order_details['tax_amount'], 2); ?></td>
                                 </tr>
                                 <tr>
                                     <td colspan="3" class="text-end"><strong>Delivery Fee:</strong></td>
-                                    <td class="text-end">$<?php echo number_format($order_details['delivery_fee'], 2); ?></td>
+                                    <td class="text-end">LKR <?php echo number_format($order_details['delivery_amount'] ?? 0, 2); ?></td>
                                 </tr>
                                 <tr class="table-light">
                                     <td colspan="3" class="text-end"><strong>Total Amount:</strong></td>
-                                    <td class="text-end"><strong>$<?php echo number_format($order_details['total_amount'], 2); ?></strong></td>
+                                    <td class="text-end"><strong>LKR <?php echo number_format($order_details['total_amount'], 2); ?></strong></td>
                                 </tr>
                             </tfoot>
                         </table>
                     </div>
                     
                     <div class="text-end mt-4">
-                        <a href="../invoice/generate.php?order_id=<?php echo $order_details['id']; ?>" 
+                        <a href="../invoice/invoice.php?order_id=<?php echo $order_details['id']; ?>" 
                            class="btn btn-outline-primary" target="_blank">
                             <i class="fas fa-download me-1"></i>Download Invoice
                         </a>
@@ -188,6 +207,7 @@ $page_title = "My Orders - CaféYC";
                                     <th>Order #</th>
                                     <th>Date</th>
                                     <th>Items</th>
+                                    <th>Qty</th>
                                     <th>Total</th>
                                     <th>Status</th>
                                     <th>Actions</th>
@@ -198,8 +218,29 @@ $page_title = "My Orders - CaféYC";
                                 <tr>
                                     <td class="fw-bold">#<?php echo str_pad($order['id'], 6, '0', STR_PAD_LEFT); ?></td>
                                     <td><?php echo date('M j, Y', strtotime($order['created_at'])); ?></td>
-                                    <td><?php echo $order['total_items']; ?> items</td>
-                                    <td class="fw-bold">$<?php echo number_format($order['total_amount'], 2); ?></td>
+                                    <td>
+                                        <?php
+                                        if (!empty($order_items_map[$order['id']])) {
+                                            foreach ($order_items_map[$order['id']] as $item) {
+                                                echo htmlspecialchars($item['product_name']) . '</span><br>';
+                                            }
+                                        } else {
+                                            echo '<span class="text-muted">-</span>';
+                                        }
+                                        ?>
+                                    </td>
+                                    <td>
+                                         <?php
+                                        if (!empty($order_items_map[$order['id']])) {
+                                            foreach ($order_items_map[$order['id']] as $item) {
+                                                echo htmlspecialchars($item['quantity']) . '</span><br>';
+                                            }
+                                        } else {
+                                            echo '<span class="text-muted">-</span>';
+                                        }
+                                        ?>
+                                    </td>
+                                    <td class="fw-bold">LKR <?php echo number_format($order['total_amount'], 2); ?></td>
                                     <td>
                                         <?php
                                         $status_class = match($order['status']) {

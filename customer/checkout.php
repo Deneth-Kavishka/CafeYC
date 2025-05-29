@@ -21,6 +21,11 @@ $cart_items = [];
 $subtotal = 0;
 
 $product_ids = array_keys($_SESSION['cart']);
+if (count($product_ids) === 0) {
+    // Prevent empty cart order
+    header('Location: cart.php');
+    exit;
+}
 $placeholders = str_repeat('?,', count($product_ids) - 1) . '?';
 
 $stmt = $pdo->prepare("
@@ -50,8 +55,11 @@ foreach ($products as $product) {
     $subtotal += $price * $quantity;
 }
 
-$tax = $subtotal * 0.08;
-$delivery_fee = 2.99;
+$tax = $subtotal * 0.01;
+$delivery_fee = 200; // Fixed delivery fee
+if ($subtotal >= 5000) {
+    $delivery_fee = 0; // Free delivery for orders over LKR 5000
+}
 $total = $subtotal + $tax + $delivery_fee;
 
 // Process order
@@ -59,63 +67,73 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $address_id = $_POST['address_id'] ?? null;
     $payment_method = $_POST['payment_method'];
     $delivery_notes = $_POST['delivery_notes'] ?? '';
-    
+
     if (!$address_id && !empty($_POST['new_address'])) {
         // Add new address
         $stmt = $pdo->prepare("INSERT INTO customer_addresses (user_id, address, created_at) VALUES (?, ?, NOW())");
         $stmt->execute([$_SESSION['user_id'], $_POST['new_address']]);
         $address_id = $pdo->lastInsertId();
     }
-    
+
     if ($address_id) {
         try {
             $pdo->beginTransaction();
-            
-            // Create order
+
+            // Get delivery address text
+            $delivery_address = '';
+            if (!empty($addresses)) {
+                foreach ($addresses as $address) {
+                    if ($address['id'] == $address_id) {
+                        $delivery_address = $address['address'];
+                        break;
+                    }
+                }
+            }
+            if (!$delivery_address && !empty($_POST['new_address'])) {
+                $delivery_address = $_POST['new_address'];
+            }
+
             $order_number = 'ORD' . date('Ymd') . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
             $stmt = $pdo->prepare("
-                INSERT INTO orders (user_id, order_number, total_items, subtotal, tax_amount, delivery_fee, total_amount, 
-                                   delivery_address_id, payment_method, delivery_notes, status, created_at) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW())
+                INSERT INTO orders (user_id, order_type, status, subtotal, tax_amount, discount_amount, total_amount, payment_method, payment_status, delivery_address, delivery_notes, created_at, updated_at)
+                VALUES (?, 'online', 'pending', ?, ?, 0, ?, ?, 'pending', ?, ?, NOW(), NOW())
             ");
             $stmt->execute([
-                $_SESSION['user_id'], 
-                $order_number,
-                array_sum($_SESSION['cart']),
+                $_SESSION['user_id'],
                 $subtotal,
                 $tax,
-                $delivery_fee,
                 $total,
-                $address_id,
                 $payment_method,
+                $delivery_address,
                 $delivery_notes
             ]);
-            
+
             $order_id = $pdo->lastInsertId();
-            
-            // Add order items
+
+            // Add order items (use item_name for compatibility)
             foreach ($cart_items as $item) {
                 $stmt = $pdo->prepare("
-                    INSERT INTO order_items (order_id, product_id, quantity, unit_price, total_price, created_at) 
-                    VALUES (?, ?, ?, ?, ?, NOW())
+                    INSERT INTO order_items (order_id, product_id, item_name, quantity, unit_price, total_price, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, NOW())
                 ");
                 $stmt->execute([
                     $order_id,
                     $item['product']['id'],
+                    $item['product']['name'],
                     $item['quantity'],
                     $item['price'],
                     $item['subtotal']
                 ]);
             }
-            
+
             $pdo->commit();
-            
+
             // Clear cart
             unset($_SESSION['cart']);
-            
+
             header("Location: orders.php?success=order_placed&order_id=$order_id");
             exit;
-            
+
         } catch (Exception $e) {
             $pdo->rollBack();
             $error = "Order placement failed. Please try again.";
@@ -259,10 +277,10 @@ $page_title = "Checkout - CaféYC";
                                     <div class="flex-grow-1">
                                         <h6 class="mb-0"><?php echo htmlspecialchars($item['product']['name']); ?></h6>
                                         <small class="text-muted">
-                                            $<?php echo number_format($item['price'], 2); ?> × <?php echo $item['quantity']; ?>
+                                            LKR <?php echo number_format($item['price'], 2); ?> × <?php echo $item['quantity']; ?>
                                         </small>
                                     </div>
-                                    <div class="fw-bold">$<?php echo number_format($item['subtotal'], 2); ?></div>
+                                    <div class="fw-bold">LKR <?php echo number_format($item['subtotal'], 2); ?></div>
                                 </div>
                             <?php endforeach; ?>
                         </div>
@@ -272,24 +290,24 @@ $page_title = "Checkout - CaféYC";
                         <!-- Totals -->
                         <div class="d-flex justify-content-between mb-2">
                             <span>Subtotal:</span>
-                            <span>$<?php echo number_format($subtotal, 2); ?></span>
+                            <span>LKR <?php echo number_format($subtotal, 2); ?></span>
                         </div>
                         
                         <div class="d-flex justify-content-between mb-2">
-                            <span>Tax (8%):</span>
-                            <span>$<?php echo number_format($tax, 2); ?></span>
+                            <span>Tax (1%):</span>
+                            <span>LKR <?php echo number_format($tax, 2); ?></span>
                         </div>
                         
                         <div class="d-flex justify-content-between mb-3">
                             <span>Delivery Fee:</span>
-                            <span>$<?php echo number_format($delivery_fee, 2); ?></span>
+                            <span>LKR <?php echo number_format($delivery_fee, 2); ?></span>
                         </div>
                         
                         <hr>
                         
                         <div class="d-flex justify-content-between mb-4">
                             <span class="fw-bold fs-5">Total:</span>
-                            <span class="fw-bold fs-5 text-primary">$<?php echo number_format($total, 2); ?></span>
+                            <span class="fw-bold fs-5 text-primary">LKR <?php echo number_format($total, 2); ?></span>
                         </div>
                         
                         <div class="d-grid gap-2">
