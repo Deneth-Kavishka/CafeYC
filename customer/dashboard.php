@@ -164,7 +164,7 @@ $page_title = "Customer Dashboard - CaféYC";
                                     <td class="fw-bold">#<?php echo str_pad($order['id'], 6, '0', STR_PAD_LEFT); ?></td>
                                     <td><?php echo date('M j, Y', strtotime($order['created_at'])); ?></td>
                                     <td><?php echo $order['total_items']; ?> items</td>
-                                    <td class="fw-bold">$<?php echo number_format($order['total_amount'], 2); ?></td>
+                                    <td class="fw-bold">LKR <?php echo number_format($order['total_amount'], 2); ?></td>
                                     <td>
                                         <?php
                                         $status_class = match($order['status']) {

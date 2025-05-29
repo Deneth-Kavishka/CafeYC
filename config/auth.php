@@ -24,18 +24,18 @@ function isLoggedIn() {
 function redirectByRole($role) {
     switch($role) {
         case 'admin':
-            return '/admin/dashboard.php';
+            return '/cafeyc/admin/dashboard.php';
         case 'cashier':
-            return '/cashier/dashboard.php';
+            return '/cafeyc/cashier/dashboard.php';
         case 'kitchen':
-            return '/kitchen/dashboard.php';
+            return '/cafeyc/kitchen/dashboard.php';
         case 'inventory':
-            return '/inventory/dashboard.php';
+            return '/cafeyc/inventory/dashboard.php';
         case 'delivery':
-            return '/delivery/dashboard.php';
+            return '/cafeyc/delivery/dashboard.php';
         case 'customer':
         default:
-            return '/customer/dashboard.php';
+            return '/cafeyc/customer/dashboard.php';
     }
 }
 ?>

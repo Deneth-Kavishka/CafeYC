@@ -38,7 +38,8 @@ $stats['pending_orders'] = $stmt->fetchColumn();
 
 // Get recent orders
 $stmt = $pdo->prepare("
-    SELECT o.*, u.name as customer_name 
+    SELECT o.*, u.name as customer_name, 
+        (SELECT SUM(quantity) FROM order_items WHERE order_id = o.id) as total_items
     FROM orders o 
     JOIN users u ON o.user_id = u.id 
     ORDER BY o.created_at DESC 
@@ -46,6 +47,18 @@ $stmt = $pdo->prepare("
 ");
 $stmt->execute();
 $recent_orders = $stmt->fetchAll();
+
+// Fetch order items for each recent order
+$order_items_map = [];
+if ($recent_orders) {
+    $order_ids = array_column($recent_orders, 'id');
+    $in = str_repeat('?,', count($order_ids) - 1) . '?';
+    $stmt = $pdo->prepare("SELECT order_id, item_name, quantity FROM order_items WHERE order_id IN ($in)");
+    $stmt->execute($order_ids);
+    foreach ($stmt->fetchAll() as $item) {
+        $order_items_map[$item['order_id']][] = $item;
+    }
+}
 
 // Get top products
 $stmt = $pdo->prepare("
@@ -195,10 +208,10 @@ $extra_css = [
                             <div class="card-body">
                                 <div class="d-flex align-items-center">
                                     <div class="flex-grow-1">
-                                        <h2 class="fw-bold mb-0">$<?php echo number_format($stats['total_revenue'], 0); ?></h2>
+                                        <h2 class="fw-bold mb-0">LKR <?php echo number_format($stats['total_revenue'], 0); ?></h2>
                                         <p class="mb-0">Total Revenue</p>
                                         <small class="opacity-75">
-                                            $<?php echo number_format($stats['today_revenue'], 2); ?> today
+                                            LKR <?php echo number_format($stats['today_revenue'], 2); ?> today
                                         </small>
                                     </div>
                                     <i class="fas fa-dollar-sign fa-2x opacity-75"></i>
@@ -270,7 +283,7 @@ $extra_css = [
                                         <h6 class="mb-0"><?php echo htmlspecialchars($product['name']); ?></h6>
                                         <small class="text-muted">
                                             <?php echo $product['total_sold']; ?> sold • 
-                                            $<?php echo number_format($product['total_revenue'], 2); ?>
+                                            LKR <?php echo number_format($product['total_revenue'], 2); ?>
                                         </small>
                                     </div>
                                 </div>
@@ -299,6 +312,8 @@ $extra_css = [
                                                 <th>Customer</th>
                                                 <th>Date</th>
                                                 <th>Items</th>
+                                                <th>Qty</th>
+                                                <th>Discount</th>
                                                 <th>Total</th>
                                                 <th>Status</th>
                                                 <th>Actions</th>
@@ -310,8 +325,22 @@ $extra_css = [
                                                 <td class="fw-bold">#<?php echo str_pad($order['id'], 6, '0', STR_PAD_LEFT); ?></td>
                                                 <td><?php echo htmlspecialchars($order['customer_name']); ?></td>
                                                 <td><?php echo date('M j, g:i A', strtotime($order['created_at'])); ?></td>
-                                                <td><?php echo $order['total_items']; ?> items</td>
-                                                <td class="fw-bold">$<?php echo number_format($order['total_amount'], 2); ?></td>
+                                                <td>
+                                                    <?php
+                                                    if (!empty($order_items_map[$order['id']])) {
+                                                        foreach ($order_items_map[$order['id']] as $item) {
+                                                            echo htmlspecialchars($item['item_name']) . '</span><br>';
+                                                        }
+                                                    } else {
+                                                        echo '<span class="text-muted">-</span>';
+                                                    }
+                                                    ?>
+                                                </td>
+                                                <td><?php echo $order['total_items']; ?></td>
+                                                <td>
+                                                    <?php echo 'LKR ' . number_format($order['discount_amount'], 2); ?>
+                                                </td>
+                                                <td class="fw-bold">LKR <?php echo number_format($order['total_amount'], 2); ?></td>
                                                 <td>
                                                     <?php
                                                     $status_class = match($order['status']) {
@@ -382,7 +411,7 @@ $extra_css = [
                     beginAtZero: true,
                     ticks: {
                         callback: function(value) {
-                            return '$' + value.toLocaleString();
+                            return 'LKR ' + value.toLocaleString();
                         }
                     }
                 }
