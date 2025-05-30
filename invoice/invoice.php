@@ -43,6 +43,7 @@ $order_items = $stmt->fetchAll();
             .no-print { display: none !important; }
         }
     </style>
+    <link rel="icon" type="image/png" href="assets/favicon.png">
 </head>
 <body>
 <div class="container my-4">
