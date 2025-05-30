@@ -104,7 +104,7 @@ $page_title = "Cashier Dashboard - CaféYC";
                 </span>
                 <div class="d-flex align-items-center">
                     <span class="text-muted me-3"><?php echo date('l, F j, Y'); ?></span>
-                    <a href="../" class="btn btn-outline-primary btn-sm">
+                    <a href="../" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener">
                         <i class="fas fa-eye me-1"></i>View Site
                     </a>
                 </div>

@@ -123,6 +123,16 @@ $page_title = "Brands Management - CaféYC Admin";
                         <i class="fas fa-chart-bar me-2"></i>Analytics
                     </a>
                 </li>
+                <li class="nav-item mb-2">
+                    <a class="nav-link text-white" href="users.php">
+                        <i class="fas fa-user-cog me-2"></i>System Users
+                    </a>
+                </li>
+                <li class="nav-item mb-2">
+                    <a class="nav-link text-white" href="feedbacks.php">
+                        <i class="fas fa-comments me-2"></i>Customer Feedback
+                    </a>
+                </li>
                 <li class="nav-item mt-auto">
                     <a class="nav-link text-white" href="../auth/logout.php">
                         <i class="fas fa-sign-out-alt me-2"></i>Logout

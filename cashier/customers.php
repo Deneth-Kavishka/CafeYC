@@ -7,9 +7,29 @@ checkAuth('cashier');
 
 $page_title = "Customers - CaféYC";
 
-// Fetch customers
-$stmt = $pdo->prepare("SELECT * FROM users WHERE role = 'customer' ORDER BY created_at DESC");
-$stmt->execute();
+// Handle search
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+$search_sql = '';
+$params = [];
+if ($search !== '') {
+    $search_sql = " AND (u.name LIKE ? OR u.email LIKE ? OR u.phone LIKE ?) ";
+    $params = array_fill(0, 3, "%$search%");
+}
+
+// Fetch customers with stats
+$stmt = $pdo->prepare("
+    SELECT u.*, 
+           COUNT(o.id) as total_orders,
+           COALESCE(SUM(CASE WHEN o.status = 'completed' THEN o.total_amount ELSE 0 END), 0) as total_spent,
+           MAX(o.created_at) as last_order_date
+    FROM users u 
+    LEFT JOIN orders o ON u.id = o.user_id
+    WHERE u.role = 'customer'
+    $search_sql
+    GROUP BY u.id
+    ORDER BY u.created_at DESC
+");
+$stmt->execute($params);
 $customers = $stmt->fetchAll();
 
 include '../includes/header.php';
@@ -63,6 +83,16 @@ include '../includes/header.php';
                 <h5 class="mb-0">Customers</h5>
             </nav>
             <div class="container-fluid p-4">
+                <!-- Search Bar -->
+                <form class="mb-3" method="get" action="">
+                    <div class="input-group" style="max-width: 350px;">
+                        <input type="text" class="form-control form-control-sm" name="search" placeholder="Search customers..." value="<?php echo htmlspecialchars($search); ?>">
+                        <button class="btn btn-outline-secondary btn-sm" type="submit"><i class="fas fa-search"></i></button>
+                        <?php if ($search): ?>
+                            <a href="customers.php" class="btn btn-outline-danger btn-sm">Clear</a>
+                        <?php endif; ?>
+                    </div>
+                </form>
                 <div class="card">
                     <div class="card-header">
                         <h5 class="mb-0">
@@ -71,29 +101,82 @@ include '../includes/header.php';
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
-                            <table class="table table-hover">
+                            <table class="table table-hover align-middle">
                                 <thead>
                                     <tr>
-                                        <th>#</th>
-                                        <th>Name</th>
-                                        <th>Email</th>
-                                        <th>Phone</th>
-                                        <th>Registered</th>
+                                        <th>Customer</th>
+                                        <th>Contact</th>
+                                        <th>Address</th>
+                                        <th>Registration</th>
+                                        <th>Orders</th>
+                                        <th>Total Spent</th>
+                                        <th>Last Order</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php foreach ($customers as $idx => $customer): ?>
+                                    <?php foreach ($customers as $customer): ?>
                                     <tr>
-                                        <td><?php echo $idx + 1; ?></td>
-                                        <td><?php echo htmlspecialchars($customer['name']); ?></td>
-                                        <td><?php echo htmlspecialchars($customer['email']); ?></td>
-                                        <td><?php echo htmlspecialchars($customer['phone']); ?></td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" 
+                                                     style="width: 36px; height: 36px;">
+                                                    <?php echo strtoupper(substr($customer['name'], 0, 1)); ?>
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-0"><?php echo htmlspecialchars($customer['name']); ?></h6>
+                                                    <small class="text-muted">ID: #<?php echo str_pad($customer['id'], 6, '0', STR_PAD_LEFT); ?></small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <div class="mb-1">
+                                                    <i class="fas fa-envelope text-muted me-1"></i>
+                                                    <?php echo htmlspecialchars($customer['email']); ?>
+                                                </div>
+                                                <?php if ($customer['phone']): ?>
+                                                <div>
+                                                    <i class="fas fa-phone text-muted me-1"></i>
+                                                    <?php echo htmlspecialchars($customer['phone']); ?>
+                                                </div>
+                                                <?php endif; ?>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <?php echo htmlspecialchars($customer['address'] ?? 'Not provided'); ?>
+                                        </td>
                                         <td><?php echo date('M j, Y', strtotime($customer['created_at'])); ?></td>
+                                        <td>
+                                            <span class="badge bg-info"><?php echo $customer['total_orders']; ?> orders</span>
+                                        </td>
+                                        <td class="fw-bold">LKR <?php echo number_format($customer['total_spent'], 2); ?></td>
+                                        <td>
+                                            <?php if ($customer['last_order_date']): ?>
+                                                <?php echo date('M j, Y', strtotime($customer['last_order_date'])); ?>
+                                            <?php else: ?>
+                                                <span class="text-muted">No orders</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <?php if ($customer['is_active']): ?>
+                                                <span class="badge bg-success">Active</span>
+                                            <?php else: ?>
+                                                <span class="badge bg-danger">Inactive</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary" 
+                                                    onclick="viewCustomer(<?php echo htmlspecialchars(json_encode($customer)); ?>)">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </td>
                                     </tr>
                                     <?php endforeach; ?>
                                     <?php if (empty($customers)): ?>
                                     <tr>
-                                        <td colspan="5" class="text-center text-muted">No customers found.</td>
+                                        <td colspan="9" class="text-center text-muted">No customers found.</td>
                                     </tr>
                                     <?php endif; ?>
                                 </tbody>
@@ -104,6 +187,64 @@ include '../includes/header.php';
             </div>
         </div>
     </div>
+
+    <!-- Customer Details Modal -->
+    <div class="modal fade" id="customerModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Customer Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="fw-bold">Personal Information</h6>
+                            <p class="mb-1"><strong>Name:</strong> <span id="customerName"></span></p>
+                            <p class="mb-1"><strong>Email:</strong> <span id="customerEmail"></span></p>
+                            <p class="mb-1"><strong>Phone:</strong> <span id="customerPhone"></span></p>
+                            <p class="mb-1"><strong>Address:</strong> <span id="customerAddress"></span></p>
+                            <p class="mb-1"><strong>Registration:</strong> <span id="customerRegistration"></span></p>
+                            <p class="mb-1"><strong>Status:</strong> <span id="customerStatus"></span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="fw-bold">Order Statistics</h6>
+                            <p class="mb-1"><strong>Total Orders:</strong> <span id="customerTotalOrders"></span></p>
+                            <p class="mb-1"><strong>Total Spent:</strong> <span id="customerTotalSpent"></span></p>
+                            <p class="mb-1"><strong>Last Order:</strong> <span id="customerLastOrder"></span></p>
+                            <p class="mb-1"><strong>Average Order:</strong> <span id="customerAvgOrder"></span></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    let currentCustomerId = null;
+
+    function viewCustomer(customer) {
+        currentCustomerId = customer.id;
+        document.getElementById('customerName').textContent = customer.name;
+        document.getElementById('customerEmail').textContent = customer.email;
+        document.getElementById('customerPhone').textContent = customer.phone || 'Not provided';
+        document.getElementById('customerAddress').textContent = customer.address || 'Not provided';
+        document.getElementById('customerRegistration').textContent = new Date(customer.created_at).toLocaleDateString();
+        document.getElementById('customerStatus').innerHTML = customer.is_active ? 
+            '<span class="badge bg-success">Active</span>' : 
+            '<span class="badge bg-danger">Inactive</span>';
+        document.getElementById('customerTotalOrders').textContent = customer.total_orders;
+        document.getElementById('customerTotalSpent').textContent = 'LKR ' + parseFloat(customer.total_spent).toFixed(2);
+        document.getElementById('customerLastOrder').textContent = customer.last_order_date ? 
+            new Date(customer.last_order_date).toLocaleDateString() : 'No orders';
+        const avgOrder = customer.total_orders > 0 ? (customer.total_spent / customer.total_orders) : 0;
+        document.getElementById('customerAvgOrder').textContent = 'LKR ' + avgOrder.toFixed(2);
+        new bootstrap.Modal(document.getElementById('customerModal')).show();
+    }
+    </script>
 </body>
 </html>

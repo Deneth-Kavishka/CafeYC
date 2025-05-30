@@ -131,6 +131,16 @@ $page_title = "Sliders Management - CaféYC Admin";
                     <a class="nav-link text-white" href="analytics.php">
                         <i class="fas fa-chart-bar me-2"></i>Analytics
                     </a>
+                    <li class="nav-item mb-2">
+                    <a class="nav-link text-white" href="users.php">
+                        <i class="fas fa-user-cog me-2"></i>System Users
+                    </a>
+                </li>
+                <li class="nav-item mb-2">
+                    <a class="nav-link text-white" href="feedbacks.php">
+                        <i class="fas fa-comments me-2"></i>Customer Feedback
+                    </a>
+                </li>
                 </li>
                 <li class="nav-item mt-auto">
                     <a class="nav-link text-white" href="../auth/logout.php">

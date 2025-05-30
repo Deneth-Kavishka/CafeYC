@@ -140,6 +140,16 @@ $page_title = "Orders Management - CaféYC Admin";
                         <i class="fas fa-chart-bar me-2"></i>Analytics
                     </a>
                 </li>
+                <li class="nav-item mb-2">
+                    <a class="nav-link text-white" href="users.php">
+                        <i class="fas fa-user-cog me-2"></i>System Users
+                    </a>
+                </li>
+                <li class="nav-item mb-2">
+                    <a class="nav-link text-white" href="feedbacks.php">
+                        <i class="fas fa-comments me-2"></i>Customer Feedback
+                    </a>
+                </li>
                 <li class="nav-item mt-auto">
                     <a class="nav-link text-white" href="../auth/logout.php">
                         <i class="fas fa-sign-out-alt me-2"></i>Logout
@@ -387,10 +397,21 @@ $page_title = "Orders Management - CaféYC Admin";
                 <?php else: ?>
                     <!-- Orders List -->
                     <div class="card">
-                        <div class="card-header">
+                        <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
                             <h5 class="mb-0">
                                 <i class="fas fa-shopping-bag me-2"></i>All Orders (<?php echo count($orders); ?>)
                             </h5>
+                            <form method="get" class="d-flex align-items-center position-relative" style="max-width: 320px; width:100%;">
+                                <span class="position-absolute" style="left:14px;top:50%;transform:translateY(-50%);color:#222;">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="text" name="search" class="form-control form-control-sm ps-5" placeholder="Search orders, customer, email..." value="<?php echo htmlspecialchars($_GET['search'] ?? ''); ?>" style="font-size:0.98em;">
+                                <?php if (!empty($_GET['search'])): ?>
+                                    <button type="button" class="btn btn-link btn-sm px-1 ms-n3" style="color:#222;" onclick="document.querySelector('input[name=search]').value='';this.form.submit();" title="Clear">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                <?php endif; ?>
+                            </form>
                         </div>
                         <div class="card-body">
                             <div class="table-responsive">
@@ -408,7 +429,22 @@ $page_title = "Orders Management - CaféYC Admin";
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <?php foreach ($orders as $order): ?>
+                                        <?php
+                                        // Search logic
+                                        $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+                                        $filtered_orders = $orders;
+                                        if ($search !== '') {
+                                            $filtered_orders = array_filter($orders, function($order) use ($search) {
+                                                $search = strtolower($search);
+                                                return strpos(strtolower($order['id']), $search) !== false
+                                                    || strpos(strtolower($order['customer_name']), $search) !== false
+                                                    || strpos(strtolower($order['customer_email']), $search) !== false
+                                                    || strpos(strtolower($order['customer_phone']), $search) !== false
+                                                    || strpos(strtolower($order['status']), $search) !== false;
+                                            });
+                                        }
+                                        foreach ($filtered_orders as $order):
+                                        ?>
                                         <tr>
                                             <td class="fw-bold">#<?php echo str_pad($order['id'], 6, '0', STR_PAD_LEFT); ?></td>
                                             <td>
@@ -470,5 +506,12 @@ $page_title = "Orders Management - CaféYC Admin";
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../assets/js/admin.js"></script>
+    <script>
+document.querySelector('form[method="get"] input[name="search"]').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        this.form.submit();
+    }
+});
+</script>
 </body>
 </html>

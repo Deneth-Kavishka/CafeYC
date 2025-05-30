@@ -23,48 +23,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $order_id = $_POST['order_id'];
     $rating = $_POST['rating'];
     $review = $_POST['review'];
-    
+
     // Check if user already reviewed this order
     $stmt = $pdo->prepare("SELECT id FROM review_ratings WHERE order_id = ? AND user_id = ?");
     $stmt->execute([$order_id, $_SESSION['user_id']]);
-    
-    if (!$stmt->fetch()) {
-        // Check if the 'review_ratings' table has a 'rating' column
-        // If not, you must add it to your database:
-        // ALTER TABLE review_ratings ADD COLUMN rating INT NOT NULL AFTER order_id;
-        // Also ensure the table exists and has the correct columns: user_id, order_id, rating, review, created_at
 
+    if (!$stmt->fetch()) {
+        // Insert into review_ratings table
         $stmt = $pdo->prepare("
             INSERT INTO review_ratings (user_id, order_id, rating, review, created_at) 
             VALUES (?, ?, ?, ?, NOW())
         ");
-        
         if ($stmt->execute([$_SESSION['user_id'], $order_id, $rating, $review])) {
             $success = "Thank you for your feedback!";
-            
-            // Update product ratings (simplified average calculation)
-            $stmt = $pdo->prepare("
-                UPDATE products p 
-                SET rating = (
-                    SELECT AVG(rr.rating) 
-                    FROM review_ratings rr 
-                    JOIN order_items oi ON rr.order_id = oi.order_id 
-                    WHERE oi.product_id = p.id
-                ) 
-                WHERE p.id IN (
-                    SELECT DISTINCT oi.product_id 
-                    FROM order_items oi 
-                    WHERE oi.order_id = ?
-                )
-            ");
+
+            // Update product ratings in feedback table for each product in this order
+            $stmt = $pdo->prepare("SELECT product_id FROM order_items WHERE order_id = ?");
             $stmt->execute([$order_id]);
+            $product_ids = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+            foreach ($product_ids as $product_id) {
+                // Insert feedback if not exists for this product/order/user
+                $stmt2 = $pdo->prepare("SELECT id FROM feedback WHERE user_id = ? AND order_id = ? AND product_id = ?");
+                $stmt2->execute([$_SESSION['user_id'], $order_id, $product_id]);
+                if (!$stmt2->fetch()) {
+                    $stmt3 = $pdo->prepare("
+                        INSERT INTO feedback (user_id, order_id, product_id, rating, comment, created_at)
+                        VALUES (?, ?, ?, ?, ?, NOW())
+                    ");
+                    // Use 'comment' instead of 'review' for the feedback table
+                    $stmt3->execute([$_SESSION['user_id'], $order_id, $product_id, $rating, $review]);
+                }
+                // Update product average rating
+                $stmt4 = $pdo->prepare("
+                    UPDATE products p
+                    SET rating = (
+                        SELECT AVG(f.rating)
+                        FROM feedback f
+                        WHERE f.product_id = p.id
+                    )
+                    WHERE p.id = ?
+                ");
+                $stmt4->execute([$product_id]);
+            }
         } else {
             $error = "Failed to submit feedback. Please try again.";
         }
     } else {
         $error = "You have already reviewed this order.";
     }
-    
+
     // Refresh orders list
     $stmt = $pdo->prepare("
         SELECT DISTINCT o.id, o.created_at, o.total_amount,

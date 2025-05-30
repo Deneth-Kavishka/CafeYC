@@ -432,10 +432,12 @@ $extra_css = ["https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.css"];
             datasets: [{
                 data: statusData.map(item => item.count),
                 backgroundColor: [
-                    '#ffc107',
-                    '#0dcaf0',
-                    '#198754',
-                    '#dc3545'
+                    //'#1e2a38', // navy
+                    '#0a58ca', // darker blue
+                    '#198754', // green
+                    '#0d6efd', // blue
+                    '#ffc107', // yellow
+                    '#375a7f'  // blue gray
                 ]
             }]
         },

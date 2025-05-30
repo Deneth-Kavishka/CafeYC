@@ -143,6 +143,16 @@ $page_title = "Hot Deals Management - CaféYC Admin";
                         <i class="fas fa-chart-bar me-2"></i>Analytics
                     </a>
                 </li>
+                <li class="nav-item mb-2">
+                    <a class="nav-link text-white" href="users.php">
+                        <i class="fas fa-user-cog me-2"></i>System Users
+                    </a>
+                </li>
+                <li class="nav-item mb-2">
+                    <a class="nav-link text-white" href="feedbacks.php">
+                        <i class="fas fa-comments me-2"></i>Customer Feedback
+                    </a>
+                </li>
                 <li class="nav-item mt-auto">
                     <a class="nav-link text-white" href="../auth/logout.php">
                         <i class="fas fa-sign-out-alt me-2"></i>Logout
@@ -210,12 +220,12 @@ $page_title = "Hot Deals Management - CaféYC Admin";
                                                 </div>
                                             </div>
                                         </td>
-                                        <td class="fw-bold">$<?php echo number_format($deal['price'], 2); ?></td>
+                                        <td class="fw-bold">LKR <?php echo number_format($deal['price'], 2); ?></td>
                                         <td>
                                             <span class="badge bg-danger fs-6"><?php echo $deal['discount_percentage']; ?>% OFF</span>
                                         </td>
                                         <td class="fw-bold text-success">
-                                            $<?php echo number_format($deal['price'] * (1 - $deal['discount_percentage']/100), 2); ?>
+                                            LKR <?php echo number_format($deal['price'] * (1 - $deal['discount_percentage']/100), 2); ?>
                                         </td>
                                         <td>
                                             <div class="small">
@@ -280,7 +290,7 @@ $page_title = "Hot Deals Management - CaféYC Admin";
                                     <option value="">Select Product</option>
                                     <?php foreach ($products as $product): ?>
                                         <option value="<?php echo $product['id']; ?>">
-                                            <?php echo htmlspecialchars($product['name']); ?> - $<?php echo number_format($product['price'], 2); ?>
+                                            <?php echo htmlspecialchars($product['name']); ?> - LKR <?php echo number_format($product['price'], 2); ?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
@@ -331,7 +341,7 @@ $page_title = "Hot Deals Management - CaféYC Admin";
                                     <option value="">Select Product</option>
                                     <?php foreach ($products as $product): ?>
                                         <option value="<?php echo $product['id']; ?>">
-                                            <?php echo htmlspecialchars($product['name']); ?> - $<?php echo number_format($product['price'], 2); ?>
+                                            <?php echo htmlspecialchars($product['name']); ?> - LKR <?php echo number_format($product['price'], 2); ?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>

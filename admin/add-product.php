@@ -146,6 +146,16 @@ $page_title = ($editing ? "Edit Product" : "Add New Product") . " - CaféYC Admi
                         <i class="fas fa-chart-bar me-2"></i>Analytics
                     </a>
                 </li>
+                <li class="nav-item mb-2">
+                    <a class="nav-link text-white" href="users.php">
+                        <i class="fas fa-user-cog me-2"></i>System Users
+                    </a>
+                </li>
+                <li class="nav-item mb-2">
+                    <a class="nav-link text-white" href="feedbacks.php">
+                        <i class="fas fa-comments me-2"></i>Customer Feedback
+                    </a>
+                </li>
                 <li class="nav-item mt-auto">
                     <a class="nav-link text-white" href="../auth/logout.php">
                         <i class="fas fa-sign-out-alt me-2"></i>Logout
@@ -235,7 +245,7 @@ $page_title = ($editing ? "Edit Product" : "Add New Product") . " - CaféYC Admi
                                         </div>
                                         
                                         <div class="col-md-6 mb-3">
-                                            <label for="price" class="form-label">Price ($) *</label>
+                                            <label for="price" class="form-label">Price (LKR) *</label>
                                             <input type="number" class="form-control" id="price" name="price" 
                                                    step="0.01" min="0" required
                                                    value="<?php echo htmlspecialchars($product['price'] ?? ''); ?>">

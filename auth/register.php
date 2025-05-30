@@ -16,9 +16,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($stmt->fetch()) {
         $error = "Email already exists";
     } else {
-        $stmt = $pdo->prepare("INSERT INTO users (name, email, password, phone, role, is_active, created_at) VALUES (?, ?, ?, ?, 'customer', 1, NOW())");
+        $stmt = $pdo->prepare("INSERT INTO users (name, email, password, phone, address, role, is_active, created_at) VALUES (?, ?, ?, ?, ?, 'customer', 1, NOW())");
         
-        if ($stmt->execute([$name, $email, $password, $phone])) {
+        if ($stmt->execute([$name, $email, $password, $phone, $address])) {
             $user_id = $pdo->lastInsertId();
             
             // Add customer address

@@ -22,6 +22,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+// Handle search
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+$search_sql = '';
+$params = [];
+if ($search !== '') {
+    $search_sql = " AND (u.name LIKE ? OR u.email LIKE ? OR u.phone LIKE ?) ";
+    $params = array_fill(0, 3, "%$search%");
+}
+
 // Get customers with order statistics
 $stmt = $pdo->prepare("
     SELECT u.*, 
@@ -31,10 +40,11 @@ $stmt = $pdo->prepare("
     FROM users u 
     LEFT JOIN orders o ON u.id = o.user_id
     WHERE u.role = 'customer'
+    $search_sql
     GROUP BY u.id
     ORDER BY u.created_at DESC
 ");
-$stmt->execute();
+$stmt->execute($params);
 $customers = $stmt->fetchAll();
 
 $page_title = "Customers Management - CaféYC Admin";
@@ -103,6 +113,16 @@ $page_title = "Customers Management - CaféYC Admin";
                         <i class="fas fa-chart-bar me-2"></i>Analytics
                     </a>
                 </li>
+                <li class="nav-item mb-2">
+                    <a class="nav-link text-white" href="users.php">
+                        <i class="fas fa-user-cog me-2"></i>System Users
+                    </a>
+                </li>
+                <li class="nav-item mb-2">
+                    <a class="nav-link text-white" href="feedbacks.php">
+                        <i class="fas fa-comments me-2"></i>Customer Feedback
+                    </a>
+                </li>
                 <li class="nav-item mt-auto">
                     <a class="nav-link text-white" href="../auth/logout.php">
                         <i class="fas fa-sign-out-alt me-2"></i>Logout
@@ -123,6 +143,17 @@ $page_title = "Customers Management - CaféYC Admin";
 
             <!-- Customers Content -->
             <div class="container-fluid p-4">
+                <!-- Search Bar -->
+                <form class="mb-3" method="get" action="">
+                    <div class="input-group" style="max-width: 400px;">
+                        <input type="text" class="form-control" name="search" placeholder="Search customers by name, email, or phone..." value="<?php echo htmlspecialchars($search); ?>">
+                        <button class="btn btn-outline-secondary" type="submit"><i class="fas fa-search"></i> Search</button>
+                        <?php if ($search): ?>
+                            <a href="customers.php" class="btn btn-outline-danger">Clear</a>
+                        <?php endif; ?>
+                    </div>
+                </form>
+
                 <?php if (isset($success)): ?>
                     <div class="alert alert-success alert-dismissible fade show" role="alert">
                         <?php echo htmlspecialchars($success); ?>
@@ -150,6 +181,7 @@ $page_title = "Customers Management - CaféYC Admin";
                                     <tr>
                                         <th>Customer</th>
                                         <th>Contact</th>
+                                        <th>Address</th>
                                         <th>Registration</th>
                                         <th>Orders</th>
                                         <th>Total Spent</th>
@@ -187,11 +219,14 @@ $page_title = "Customers Management - CaféYC Admin";
                                                 <?php endif; ?>
                                             </div>
                                         </td>
+                                        <td>
+                                            <?php echo htmlspecialchars($customer['address'] ?? 'Not provided'); ?>
+                                        </td>
                                         <td><?php echo date('M j, Y', strtotime($customer['created_at'])); ?></td>
                                         <td>
                                             <span class="badge bg-info"><?php echo $customer['total_orders']; ?> orders</span>
                                         </td>
-                                        <td class="fw-bold">$<?php echo number_format($customer['total_spent'], 2); ?></td>
+                                        <td class="fw-bold">LKR <?php echo number_format($customer['total_spent'], 2); ?></td>
                                         <td>
                                             <?php if ($customer['last_order_date']): ?>
                                                 <?php echo date('M j, Y', strtotime($customer['last_order_date'])); ?>
@@ -248,6 +283,7 @@ $page_title = "Customers Management - CaféYC Admin";
                             <p class="mb-1"><strong>Name:</strong> <span id="customerName"></span></p>
                             <p class="mb-1"><strong>Email:</strong> <span id="customerEmail"></span></p>
                             <p class="mb-1"><strong>Phone:</strong> <span id="customerPhone"></span></p>
+                            <p class="mb-1"><strong>Address:</strong> <span id="customerAddress"></span></p>
                             <p class="mb-1"><strong>Registration:</strong> <span id="customerRegistration"></span></p>
                             <p class="mb-1"><strong>Status:</strong> <span id="customerStatus"></span></p>
                         </div>
@@ -280,18 +316,19 @@ $page_title = "Customers Management - CaféYC Admin";
         document.getElementById('customerName').textContent = customer.name;
         document.getElementById('customerEmail').textContent = customer.email;
         document.getElementById('customerPhone').textContent = customer.phone || 'Not provided';
+        document.getElementById('customerAddress').textContent = customer.address || 'Not provided';
         document.getElementById('customerRegistration').textContent = new Date(customer.created_at).toLocaleDateString();
         document.getElementById('customerStatus').innerHTML = customer.is_active ? 
             '<span class="badge bg-success">Active</span>' : 
             '<span class="badge bg-danger">Inactive</span>';
         
         document.getElementById('customerTotalOrders').textContent = customer.total_orders;
-        document.getElementById('customerTotalSpent').textContent = '$' + parseFloat(customer.total_spent).toFixed(2);
+        document.getElementById('customerTotalSpent').textContent = 'LKR ' + parseFloat(customer.total_spent).toFixed(2);
         document.getElementById('customerLastOrder').textContent = customer.last_order_date ? 
             new Date(customer.last_order_date).toLocaleDateString() : 'No orders';
         
         const avgOrder = customer.total_orders > 0 ? (customer.total_spent / customer.total_orders) : 0;
-        document.getElementById('customerAvgOrder').textContent = '$' + avgOrder.toFixed(2);
+        document.getElementById('customerAvgOrder').textContent = 'LKR ' + avgOrder.toFixed(2);
         
         new bootstrap.Modal(document.getElementById('customerModal')).show();
     }

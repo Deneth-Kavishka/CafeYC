@@ -92,6 +92,79 @@ $stmt = $pdo->prepare("
 $stmt->execute();
 $monthly_revenue = $stmt->fetchAll();
 
+// Add filter logic for revenue chart
+$revenue_filter = isset($_GET['revenue_filter']) ? $_GET['revenue_filter'] : 'monthly';
+$from_date = isset($_GET['from_date']) ? $_GET['from_date'] : '';
+$to_date = isset($_GET['to_date']) ? $_GET['to_date'] : '';
+
+$custom_range = ($from_date && $to_date);
+
+if ($custom_range) {
+    $revenue_label = "Revenue (" . htmlspecialchars($from_date) . " to " . htmlspecialchars($to_date) . ")";
+    $revenue_sql = "
+        SELECT DATE(created_at) as period, SUM(total_amount) as revenue
+        FROM orders
+        WHERE status = 'completed' AND DATE(created_at) BETWEEN ? AND ?
+        GROUP BY DATE(created_at)
+        ORDER BY period
+    ";
+    $stmt = $pdo->prepare($revenue_sql);
+    $stmt->execute([$from_date, $to_date]);
+    $revenue_chart_data = $stmt->fetchAll();
+    $chart_type = 'bar';
+} else {
+    switch ($revenue_filter) {
+        case 'daily':
+            $revenue_label = "Daily Revenue (Last 30 Days)";
+            $revenue_sql = "
+                SELECT DATE(created_at) as period, SUM(total_amount) as revenue
+                FROM orders
+                WHERE status = 'completed' AND created_at >= DATE_SUB(CURDATE(), INTERVAL 29 DAY)
+                GROUP BY DATE(created_at)
+                ORDER BY period
+            ";
+            $chart_type = 'bar';
+            break;
+        case 'weekly':
+            $revenue_label = "Weekly Revenue (Last 12 Weeks)";
+            $revenue_sql = "
+                SELECT DATE_FORMAT(created_at, '%x-%v') as period, SUM(total_amount) as revenue
+                FROM orders
+                WHERE status = 'completed' AND created_at >= DATE_SUB(CURDATE(), INTERVAL 12 WEEK)
+                GROUP BY DATE_FORMAT(created_at, '%x-%v')
+                ORDER BY period
+            ";
+            $chart_type = 'line';
+            break;
+        case 'annually':
+            $revenue_label = "Annual Revenue (Last 5 Years)";
+            $revenue_sql = "
+                SELECT DATE_FORMAT(created_at, '%Y') as period, SUM(total_amount) as revenue
+                FROM orders
+                WHERE status = 'completed' AND created_at >= DATE_SUB(CURDATE(), INTERVAL 5 YEAR)
+                GROUP BY DATE_FORMAT(created_at, '%Y')
+                ORDER BY period
+            ";
+            $chart_type = 'line';
+            break;
+        case 'monthly':
+        default:
+            $revenue_label = "Monthly Revenue (Last 12 Months)";
+            $revenue_sql = "
+                SELECT DATE_FORMAT(created_at, '%Y-%m') as period, SUM(total_amount) as revenue
+                FROM orders
+                WHERE status = 'completed' AND created_at >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+                GROUP BY DATE_FORMAT(created_at, '%Y-%m')
+                ORDER BY period
+            ";
+            $chart_type = 'line';
+            break;
+    }
+    $stmt = $pdo->prepare($revenue_sql);
+    $stmt->execute();
+    $revenue_chart_data = $stmt->fetchAll();
+}
+
 $page_title = "Admin Dashboard - CaféYC";
 $extra_css = [
     "https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.css"
@@ -164,6 +237,16 @@ $extra_css = [
                         <i class="fas fa-chart-bar me-2"></i>Analytics
                     </a>
                 </li>
+                <li class="nav-item mb-2">
+                    <a class="nav-link text-white" href="users.php">
+                        <i class="fas fa-user-cog me-2"></i>System Users
+                    </a>
+                </li>
+                <li class="nav-item mb-2">
+                    <a class="nav-link text-white" href="feedbacks.php">
+                        <i class="fas fa-comments me-2"></i>Customer Feedback
+                    </a>
+                </li>
                 <li class="nav-item mt-auto">
                     <a class="nav-link text-white" href="../auth/logout.php">
                         <i class="fas fa-sign-out-alt me-2"></i>Logout
@@ -181,12 +264,11 @@ $extra_css = [
                 </span>
                 <div class="d-flex align-items-center">
                     <span class="text-muted me-3"><?php echo date('l, F j, Y'); ?></span>
-                    <a href="../" class="btn btn-outline-primary btn-sm">
+                    <a href="../" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener">
                         <i class="fas fa-eye me-1"></i>View Site
                     </a>
                 </div>
             </nav>
-
             <!-- Dashboard Content -->
             <div class="container-fluid p-4">
                 <!-- Statistics Cards -->
@@ -260,10 +342,29 @@ $extra_css = [
                 <div class="row mb-4">
                     <div class="col-lg-8">
                         <div class="card h-100">
-                            <div class="card-header">
-                                <h5 class="mb-0">
-                                    <i class="fas fa-chart-line me-2"></i>Monthly Revenue
-                                </h5>
+                            <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+                                <div>
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-chart-line me-2"></i><?php echo $revenue_label; ?>
+                                    </h5>
+                                </div>
+                                <form method="get" class="d-flex align-items-center gap-2 flex-wrap" style="font-size: 0.95rem;">
+                                    <label class="me-2 fw-semibold text-secondary mb-0">View:</label>
+                                    <select name="revenue_filter" class="form-select form-select-sm" style="width:120px;" onchange="this.form.submit()">
+                                        <option value="daily" <?php if($revenue_filter=='daily') echo 'selected'; ?>>Daily</option>
+                                        <option value="weekly" <?php if($revenue_filter=='weekly') echo 'selected'; ?>>Weekly</option>
+                                        <option value="monthly" <?php if($revenue_filter=='monthly') echo 'selected'; ?>>Monthly</option>
+                                        <option value="annually" <?php if($revenue_filter=='annually') echo 'selected'; ?>>Annually</option>
+                                    </select>
+                                    <span class="mx-2 text-secondary" style="font-size:0.9em;">or</span>
+                                    <input type="date" name="from_date" class="form-control form-control-sm" style="width:140px;" value="<?php echo htmlspecialchars($from_date); ?>" max="<?php echo date('Y-m-d'); ?>">
+                                    <span class="mx-1" style="font-size:0.9em;">to</span>
+                                    <input type="date" name="to_date" class="form-control form-control-sm" style="width:140px;" value="<?php echo htmlspecialchars($to_date); ?>" max="<?php echo date('Y-m-d'); ?>">
+                                    <button type="submit" class="btn btn-sm btn-primary ms-2 px-3" style="font-size:0.95em;">Apply</button>
+                                    <?php if ($custom_range): ?>
+                                        <a href="dashboard.php" class="btn btn-sm btn-outline-secondary ms-2 px-3" style="font-size:0.95em;">Clear</a>
+                                    <?php endif; ?>
+                                </form>
                             </div>
                             <div class="card-body">
                                 <canvas id="revenueChart" height="300"></canvas>
@@ -385,22 +486,48 @@ $extra_css = [
     <script>
     // Revenue Chart
     const revenueCtx = document.getElementById('revenueChart').getContext('2d');
-    const revenueData = <?php echo json_encode($monthly_revenue); ?>;
-    
+    const revenueData = <?php echo json_encode($revenue_chart_data); ?>;
+    const filterType = "<?php echo $revenue_filter; ?>";
+    const chartType = "<?php echo $chart_type; ?>";
+    let labels = [];
+    if ("<?php echo $custom_range ? '1' : ''; ?>" === "1") {
+        labels = revenueData.map(item => {
+            const date = new Date(item.period);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        });
+    } else if (filterType === 'daily') {
+        labels = revenueData.map(item => {
+            const date = new Date(item.period);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        });
+    } else if (filterType === 'weekly') {
+        labels = revenueData.map(item => {
+            const [year, week] = item.period.split('-');
+            return 'W' + week + ' ' + year;
+        });
+    } else if (filterType === 'annually') {
+        labels = revenueData.map(item => item.period);
+    } else {
+        // monthly
+        labels = revenueData.map(item => {
+            const date = new Date(item.period + '-01');
+            return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+        });
+    }
+
     new Chart(revenueCtx, {
-        type: 'line',
+        type: chartType,
         data: {
-            labels: revenueData.map(item => {
-                const date = new Date(item.month + '-01');
-                return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-            }),
+            labels: labels,
             datasets: [{
                 label: 'Revenue',
                 data: revenueData.map(item => item.revenue),
                 borderColor: '#0d6efd',
-                backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                backgroundColor: 'rgba(13, 110, 253, 0.3)',
                 tension: 0.4,
-                fill: true
+                fill: true,
+                pointRadius: 4,
+                pointHoverRadius: 6
             }]
         },
         options: {
@@ -409,6 +536,13 @@ $extra_css = [
             plugins: {
                 legend: {
                     display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'LKR ' + Number(context.parsed.y).toLocaleString();
+                        }
+                    }
                 }
             },
             scales: {
