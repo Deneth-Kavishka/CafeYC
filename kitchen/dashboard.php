@@ -115,7 +115,14 @@ $page_title = "Kitchen Dashboard - CaféYC";
                     Welcome back, <strong><?php echo htmlspecialchars($_SESSION['name']); ?></strong>
                 </span>
                 <div class="d-flex align-items-center">
-                    <span class="text-muted me-3"><?php echo date('l, F j, Y g:i A'); ?></span>
+                    <span class="text-muted me-3">
+                        <?php
+                            // Get current system date and time in the correct timezone
+                            date_default_timezone_set('Asia/Kolkata'); // Change to your desired timezone
+                            $now = new DateTime();
+                            echo $now->format('l, F j, Y g:i A');
+                        ?>
+                    </span>
                     <button class="btn btn-outline-primary btn-sm" onclick="refreshOrders()">
                         <i class="fas fa-sync-alt me-1"></i>Refresh
                     </button>
@@ -342,19 +349,37 @@ $page_title = "Kitchen Dashboard - CaféYC";
     }
 
     function viewOrderDetails(orderId) {
+        // Show loading spinner in modal
+        document.getElementById('orderDetailsContent').innerHTML = `
+            <div class="d-flex justify-content-center align-items-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        `;
+        new bootstrap.Modal(document.getElementById('orderDetailsModal')).show();
+
         // Fetch order details via AJAX
         fetch(`../api/orders.php?action=get_order&id=${orderId}`)
             .then(response => response.json())
             .then(data => {
-                if (data.success) {
+                if (data.success && data.order) {
                     displayOrderDetails(data.order);
                 } else {
-                    alert('Failed to load order details');
+                    document.getElementById('orderDetailsContent').innerHTML = `
+                        <div class="alert alert-danger">
+                            Failed to load order details. Please try again.
+                        </div>
+                    `;
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Error loading order details');
+                document.getElementById('orderDetailsContent').innerHTML = `
+                    <div class="alert alert-danger">
+                        Error loading order details.
+                    </div>
+                `;
             });
     }
 
@@ -374,12 +399,14 @@ $page_title = "Kitchen Dashboard - CaféYC";
                         ${order.items.map(item => `
                             <div class="list-group-item d-flex justify-content-between">
                                 <span>${item.quantity}x ${item.product_name}</span>
-                                <span>$${parseFloat(item.unit_price).toFixed(2)}</span>
+                                <span>LKR ${parseFloat(item.unit_price).toFixed(2)}</span>
                             </div>
+                            
                         `).join('')}
                     </div>
                     <div class="mt-2">
-                        <strong>Total: $${parseFloat(order.total_amount).toFixed(2)}</strong>
+                    
+                        <strong>Total: LKR ${parseFloat(order.total_amount).toFixed(2)}</strong>
                     </div>
                 </div>
             </div>
