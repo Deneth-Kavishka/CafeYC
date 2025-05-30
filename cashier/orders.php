@@ -20,15 +20,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     }
 }
 
-// Get orders with customer information
+// Get orders with customer information (add search filter)
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+$params = [];
+$where = '';
+if ($search !== '') {
+    $where = "WHERE (o.id LIKE ? OR u.name LIKE ? OR u.email LIKE ?)";
+    $search_param = '%' . $search . '%';
+    $params = [$search_param, $search_param, $search_param];
+}
+
 $stmt = $pdo->prepare("
     SELECT o.*, u.name as customer_name, u.email as customer_email, u.phone as customer_phone,
         (SELECT SUM(quantity) FROM order_items WHERE order_id = o.id) as total_items
     FROM orders o 
     JOIN users u ON o.user_id = u.id 
+    $where
     ORDER BY o.created_at DESC
 ");
-$stmt->execute();
+$stmt->execute($params);
 $orders = $stmt->fetchAll();
 
 // Fetch order items for each order in the list (with product name)
@@ -131,13 +141,28 @@ $pending_orders = 0;
         <!-- Main Content -->
         <div class="flex-grow-1">
             <!-- Top Navigation -->
-            <nav class="navbar navbar-light bg-white border-bottom px-4">
+            <nav class="navbar navbar-light bg-white border-bottom px-4 d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">Orders Management</h5>
-                <?php if ($order_details): ?>
-                    <a href="orders.php" class="btn btn-outline-secondary">
-                        <i class="fas fa-arrow-left me-2"></i>Back to Orders
-                    </a>
-                <?php endif; ?>
+                <div class="d-flex align-items-center">
+                    <?php if ($order_details): ?>
+                        <a href="orders.php" class="btn btn-outline-secondary me-2">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Orders
+                        </a>
+                    <?php endif; ?>
+                    <!-- Search Bar -->
+                    <form class="d-flex" method="get" action="orders.php" style="max-width: 250px;">
+                        <input class="form-control form-control-sm rounded-pill me-2" 
+                               type="search" 
+                               name="search" 
+                               placeholder="Search orders..." 
+                               aria-label="Search"
+                               value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>"
+                               style="min-width: 120px;">
+                        <button class="btn btn-sm btn-primary rounded-pill" type="submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </form>
+                </div>
             </nav>
 
             <!-- Orders Content -->

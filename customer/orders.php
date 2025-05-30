@@ -220,9 +220,10 @@ $page_title = "My Orders - CaféYC";
                                     <td><?php echo date('M j, Y', strtotime($order['created_at'])); ?></td>
                                     <td>
                                         <?php
+                                        // Show items as "Product x Qty" per line
                                         if (!empty($order_items_map[$order['id']])) {
                                             foreach ($order_items_map[$order['id']] as $item) {
-                                                echo htmlspecialchars($item['product_name']) . '</span><br>';
+                                                echo htmlspecialchars($item['product_name']) . ' x ' . htmlspecialchars($item['quantity']) . '<br>';
                                             }
                                         } else {
                                             echo '<span class="text-muted">-</span>';
@@ -230,11 +231,11 @@ $page_title = "My Orders - CaféYC";
                                         ?>
                                     </td>
                                     <td>
-                                         <?php
+                                        <?php
+                                        // Show total quantity for the order
                                         if (!empty($order_items_map[$order['id']])) {
-                                            foreach ($order_items_map[$order['id']] as $item) {
-                                                echo htmlspecialchars($item['quantity']) . '</span><br>';
-                                            }
+                                            // Use array_sum for concise summing
+                                            echo array_sum(array_column($order_items_map[$order['id']], 'quantity'));
                                         } else {
                                             echo '<span class="text-muted">-</span>';
                                         }

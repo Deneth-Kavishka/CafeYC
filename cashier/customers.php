@@ -79,20 +79,26 @@ include '../includes/header.php';
         </nav>
         <!-- Main Content -->
         <div class="flex-grow-1">
-            <nav class="navbar navbar-light bg-white border-bottom px-4">
+            <nav class="navbar navbar-light bg-white border-bottom px-4 d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">Customers</h5>
+                <!-- Search Bar (Order's style, top right, small, pro look) -->
+                <form class="d-flex" method="get" action="customers.php" style="max-width: 250px;">
+                    <input class="form-control form-control-sm rounded-pill me-2"
+                           type="search"
+                           name="search"
+                           placeholder="Search customers..."
+                           aria-label="Search"
+                           value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>"
+                           style="min-width: 120px;">
+                    <button class="btn btn-sm btn-primary rounded-pill" type="submit">
+                        <i class="fas fa-search"></i>
+                    </button>
+                    <?php if ($search): ?>
+                        <a href="customers.php" class="btn btn-sm btn-outline-danger rounded-pill ms-2">Clear</a>
+                    <?php endif; ?>
+                </form>
             </nav>
             <div class="container-fluid p-4">
-                <!-- Search Bar -->
-                <form class="mb-3" method="get" action="">
-                    <div class="input-group" style="max-width: 350px;">
-                        <input type="text" class="form-control form-control-sm" name="search" placeholder="Search customers..." value="<?php echo htmlspecialchars($search); ?>">
-                        <button class="btn btn-outline-secondary btn-sm" type="submit"><i class="fas fa-search"></i></button>
-                        <?php if ($search): ?>
-                            <a href="customers.php" class="btn btn-outline-danger btn-sm">Clear</a>
-                        <?php endif; ?>
-                    </div>
-                </form>
                 <div class="card">
                     <div class="card-header">
                         <h5 class="mb-0">

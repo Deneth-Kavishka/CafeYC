@@ -19,9 +19,16 @@ $stmt->execute([$_SESSION['user_id']]);
 $total_spent = $stmt->fetchColumn() ?? 0;
 
 // Get recent orders
-$stmt = $pdo->prepare("SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC LIMIT 5");
+$stmt = $pdo->prepare("
+    SELECT o.*,
+        (SELECT COUNT(*) FROM order_items oi WHERE oi.order_id = o.id) as total_items
+    FROM orders o
+    WHERE o.user_id = ?
+    ORDER BY o.created_at DESC
+    LIMIT 5
+");
 $stmt->execute([$_SESSION['user_id']]);
-$recent_orders = $stmt->fetchAll();
+$recent_orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $page_title = "Customer Dashboard - CaféYC";
 ?>
@@ -163,7 +170,7 @@ $page_title = "Customer Dashboard - CaféYC";
                                 <tr>
                                     <td class="fw-bold">#<?php echo str_pad($order['id'], 6, '0', STR_PAD_LEFT); ?></td>
                                     <td><?php echo date('M j, Y', strtotime($order['created_at'])); ?></td>
-                                    <td><?php echo $order['total_items']; ?> items</td>
+                                    <td><?php echo $order['total_items'] ?? 0; ?> items</td>
                                     <td class="fw-bold">LKR <?php echo number_format($order['total_amount'], 2); ?></td>
                                     <td>
                                         <?php

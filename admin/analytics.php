@@ -176,6 +176,9 @@ $extra_css = ["https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.css"];
                     <button class="btn btn-outline-primary btn-sm" onclick="exportData()">
                         <i class="fas fa-download me-1"></i>Export Report
                     </button>
+                    <button class="btn btn-outline-secondary btn-sm ms-2" onclick="window.print()">
+                        <i class="fas fa-print me-1"></i>Print
+                    </button>
                 </div>
             </nav>
 

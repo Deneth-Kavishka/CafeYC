@@ -294,11 +294,19 @@ include '../includes/header.php';
                 </div>
                 <!-- Monthly Summary Table -->
                 <div class="card">
-                    <div class="card-header">
+                    <div class="card-header d-flex justify-content-between align-items-center">
                         <h6 class="mb-0"><i class="fas fa-table me-2"></i>Monthly Sales Summary</h6>
+                        <div>
+                            <button class="btn btn-outline-secondary btn-sm me-2" onclick="window.print()">
+                                <i class="fas fa-print me-1"></i>Print
+                            </button>
+                            <button class="btn btn-outline-primary btn-sm" onclick="downloadCSV()">
+                                <i class="fas fa-download me-1"></i>Download CSV
+                            </button>
+                        </div>
                     </div>
                     <div class="card-body">
-                        <table class="table table-bordered table-striped">
+                        <table id="monthlySummaryTable" class="table table-bordered table-striped">
                             <thead>
                                 <tr>
                                     <th>Date</th>
@@ -407,6 +415,29 @@ include '../includes/header.php';
         salesTrendChart.data.datasets[1].data = trendData[currentType].data;
         salesTrendChart.update();
     });
+
+    // Download CSV for Monthly Sales Summary
+    function downloadCSV() {
+        const table = document.getElementById('monthlySummaryTable');
+        let csv = [];
+        for (let row of table.rows) {
+            let rowData = [];
+            for (let cell of row.cells) {
+                // Escape quotes in cell text
+                let text = cell.innerText.replace(/"/g, '""');
+                rowData.push('"' + text + '"');
+            }
+            csv.push(rowData.join(','));
+        }
+        let csvContent = csv.join('\n');
+        let blob = new Blob([csvContent], { type: 'text/csv' });
+        let link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'monthly_sales_summary.csv';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

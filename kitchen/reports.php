@@ -220,15 +220,23 @@ $page_title = "Kitchen Reports - CaféYC";
                     </div>-->
                 </div>
                 <div class="card shadow-sm mb-4 border-0">
-                    <div class="card-header bg-primary text-white">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                         <h5 class="mb-0"><i class="fas fa-check-circle me-2"></i>Completed Orders<?php echo $label !== "Today" ? " ($label)" : " Today"; ?></h5>
+                        <div>
+                            <button class="btn btn-outline-light btn-sm me-2" onclick="window.print()">
+                                <i class="fas fa-print me-1"></i>Print
+                            </button>
+                            <button class="btn btn-outline-light btn-sm" onclick="downloadCompletedCSV()">
+                                <i class="fas fa-download me-1"></i>Download CSV
+                            </button>
+                        </div>
                     </div>
                     <div class="card-body p-0">
                         <?php if (empty($completed_orders)): ?>
                             <div class="p-4 text-center text-muted">No completed orders in this period.</div>
                         <?php else: ?>
                             <div class="table-responsive">
-                                <table class="table table-striped mb-0">
+                                <table id="completedOrdersTable" class="table table-striped mb-0">
                                     <thead>
                                         <tr>
                                             <th>Order #</th>
@@ -257,5 +265,28 @@ $page_title = "Kitchen Reports - CaféYC";
             </div>
         </div>
     </div>
+    <script>
+    function downloadCompletedCSV() {
+        const table = document.getElementById('completedOrdersTable');
+        if (!table) return;
+        let csv = [];
+        for (let row of table.rows) {
+            let rowData = [];
+            for (let cell of row.cells) {
+                let text = cell.innerText.replace(/"/g, '""');
+                rowData.push('"' + text + '"');
+            }
+            csv.push(rowData.join(','));
+        }
+        let csvContent = csv.join('\n');
+        let blob = new Blob([csvContent], { type: 'text/csv' });
+        let link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'completed_orders.csv';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+    </script>
 </body>
 </html>
