@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="card shadow border-0">
                     <div class="card-body p-5">
                         <div class="text-center mb-4">
-                            <h2 class="fw-bold text-primary">
+                            <h2 class="fw-bold" style="color: #8B4513;">
                                 <i class="fas fa-coffee me-2"></i>CaféYC
                             </h2>
                             <p class="text-muted">Welcome back! Please sign in to your account.</p>
@@ -81,7 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         
                         <div class="text-center mt-4">
                             <p class="mb-0">Don't have an account? 
-                                <a href="register.php" class="text-primary text-decoration-none">Sign up here</a>
+                                <a href="register.php" class=" text-decoration-none" style="color: #3a3a3ab6;">Sign up here</a>
                             </p>
                         </div>
                         
