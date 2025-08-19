@@ -88,7 +88,7 @@ $sliders = $stmt->fetchAll();
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <span class="text-decoration-line-through text-muted">LKR <?php echo number_format($deal['price'], 2); ?></span>
-                                    <span class="fs-5 fw-bold text-primary ms-2">
+                                    <span class="fs-5 fw-bold ms-2" style="color: #561e04ff;">
                                         LKR <?php echo number_format($deal['price'] * (1 - $deal['discount_percentage']/100), 2); ?>
                                     </span>
                                 </div>
@@ -111,7 +111,7 @@ $sliders = $stmt->fetchAll();
         <div class="container">
             <div class="row mb-4">
                 <div class="col-12 text-center">
-                    <h2 class="display-5 fw-bold text-primary">Featured Products</h2>
+                    <h2 class="display-5 fw-bold" style="color: #5a3005ff;">Featured Products</h2>
                     <p class="lead">Discover our most popular café favorites</p>
                 </div>
             </div>
@@ -125,7 +125,7 @@ $sliders = $stmt->fetchAll();
                             <h5 class="card-title"><?php echo htmlspecialchars($product['name']); ?></h5>
                             <p class="card-text text-muted flex-grow-1"><?php echo htmlspecialchars($product['description']); ?></p>
                             <div class="d-flex justify-content-between align-items-center">
-                                <span class="fs-5 fw-bold text-primary">LKR<?php echo number_format($product['price'], 2); ?></span>
+                                <span class="fs-5 fw-bold" style="color: #561e04ff;">LKR<?php echo number_format($product['price'], 2); ?></span>
                                 <button class="btn btn-primary btn-sm add-to-cart" 
                                     data-product-id="<?php echo $product['id']; ?>" 
                                     onclick="event.preventDefault(); if(window.cafeCart){window.cafeCart.addToCart('<?php echo $product['id']; ?>', 1);}">
@@ -144,44 +144,45 @@ $sliders = $stmt->fetchAll();
     </section>
 
     <!-- About Section -->
-    <section class="py-5 bg-primary text-white">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col-lg-6">
-                    <h2 class="display-5 fw-bold mb-4">Welcome to CaféYC</h2>
-                    <p class="lead mb-4">
-                        Experience the finest coffee culture with our premium selection of handcrafted beverages, 
-                        fresh pastries, and exceptional service. From early morning espressos to late-night lattes, 
-                        we're here to fuel your passion.
-                    </p>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-coffee fa-2x me-3"></i>
-                                <div>
-                                    <h5>Premium Coffee</h5>
-                                    <p class="mb-0">Ethically sourced beans</p>
-                                </div>
+   <section class="py-5 text-white" style="background-color: #6e3f02ff;">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h2 class="display-5 fw-bold mb-4">Welcome to CaféYC</h2>
+                <p class="lead mb-4">
+                    Experience the finest coffee culture with our premium selection of handcrafted beverages, 
+                    fresh pastries, and exceptional service. From early morning espressos to late-night lattes, 
+                    we're here to fuel your passion.
+                </p>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-coffee fa-2x me-3"></i>
+                            <div>
+                                <h5>Premium Coffee</h5>
+                                <p class="mb-0">Ethically sourced beans</p>
                             </div>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-clock fa-2x me-3"></i>
-                                <div>
-                                    <h5>Quick Service</h5>
-                                    <p class="mb-0">Fast & efficient</p>
-                                </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-clock fa-2x me-3"></i>
+                            <div>
+                                <h5>Quick Service</h5>
+                                <p class="mb-0">Fast & efficient</p>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-lg-6">
-                    <img src="https://images.unsplash.com/photo-1554118811-1e0d58224f24?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
-                         class="img-fluid rounded" alt="Café Interior">
-                </div>
+            </div>
+            <div class="col-lg-6">
+                <img src="https://images.unsplash.com/photo-1554118811-1e0d58224f24?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
+                     class="img-fluid rounded" alt="Café Interior">
             </div>
         </div>
-    </section>
+    </div>
+</section>
+
 
     <?php include 'includes/footer.php'; ?>
 

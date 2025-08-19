@@ -3,33 +3,37 @@ session_start();
 require_once '../config/database.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = $_POST['name'];
-    $email = $_POST['email'];
-    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
-    $phone = $_POST['phone'];
-    $address = $_POST['address'];
-    
-    // Check if email already exists
-    $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
-    $stmt->execute([$email]);
-    
-    if ($stmt->fetch()) {
-        $error = "Email already exists";
+    if ($_POST['password'] !== $_POST['confirm_password']) {
+        $error = "Passwords do not match";
     } else {
-        $stmt = $pdo->prepare("INSERT INTO users (name, email, password, phone, address, role, is_active, created_at) VALUES (?, ?, ?, ?, ?, 'customer', 1, NOW())");
+        $name = $_POST['name'];
+        $email = $_POST['email'];
+        $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+        $phone = $_POST['phone'];
+        $address = $_POST['address'];
         
-        if ($stmt->execute([$name, $email, $password, $phone, $address])) {
-            $user_id = $pdo->lastInsertId();
-            
-            // Add customer address
-            if (!empty($address)) {
-                $stmt = $pdo->prepare("INSERT INTO customer_addresses (user_id, address, is_default, created_at) VALUES (?, ?, 1, NOW())");
-                $stmt->execute([$user_id, $address]);
-            }
-            
-            $success = "Registration successful! Please login to continue.";
+        // Check if email already exists
+        $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
+        $stmt->execute([$email]);
+        
+        if ($stmt->fetch()) {
+            $error = "Email already exists";
         } else {
-            $error = "Registration failed. Please try again.";
+            $stmt = $pdo->prepare("INSERT INTO users (name, email, password, phone, address, role, is_active, created_at) VALUES (?, ?, ?, ?, ?, 'customer', 1, NOW())");
+            
+            if ($stmt->execute([$name, $email, $password, $phone, $address])) {
+                $user_id = $pdo->lastInsertId();
+                
+                // Add customer address
+                if (!empty($address)) {
+                    $stmt = $pdo->prepare("INSERT INTO customer_addresses (user_id, address, is_default, created_at) VALUES (?, ?, 1, NOW())");
+                    $stmt->execute([$user_id, $address]);
+                }
+                
+                $success = "Registration successful! Please login to continue.";
+            } else {
+                $error = "Registration failed. Please try again.";
+            }
         }
     }
 }
@@ -53,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="card shadow border-0">
                     <div class="card-body p-5">
                         <div class="text-center mb-4">
-                            <h2 class="fw-bold text-primary">
+                            <h2 class="fw-bold" style="color: #8B4513;">
                                 <i class="fas fa-coffee me-2"></i>CaféYC
                             </h2>
                             <p class="text-muted">Create your account and start ordering!</p>
@@ -72,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </div>
                         <?php endif; ?>
                         
-                        <form method="POST">
+                        <form method="POST" id="registerForm">
                             <div class="mb-3">
                                 <label for="name" class="form-label">Full Name</label>
                                 <div class="input-group">
@@ -113,6 +117,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 </div>
                                 <div class="form-text">Password must be at least 6 characters long.</div>
                             </div>
+
+                            <div class="mb-3">
+                                <label for="confirm_password" class="form-label">Confirm Password</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" required minlength="6">
+                                </div>
+                                <div class="form-text">Please re-enter your password to confirm.</div>
+                            </div>
                             
                             <div class="d-grid">
                                 <button type="submit" class="btn btn-primary btn-lg">Create Account</button>
@@ -121,7 +134,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         
                         <div class="text-center mt-4">
                             <p class="mb-0">Already have an account? 
-                                <a href="login.php" class="text-primary text-decoration-none">Sign in here</a>
+                                <a href="login.php" class="text-decoration-none" style="color: #3a3a3ab6;">Sign in here</a>
                             </p>
                         </div>
                         
@@ -137,5 +150,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- ✅ JavaScript Confirm Password Validation -->
+    <script>
+    document.getElementById("registerForm").addEventListener("submit", function(event) {
+        const password = document.getElementById("password").value;
+        const confirmPassword = document.getElementById("confirm_password").value;
+
+        if (password !== confirmPassword) {
+            event.preventDefault(); // Stop form submission
+            alert("Passwords do not match. Please check again.");
+        }
+    });
+    </script>
 </body>
 </html>

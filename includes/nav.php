@@ -8,7 +8,7 @@ if (isLoggedIn() && isset($_SESSION['cart'])) {
 
 <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
     <div class="container">
-        <a class="navbar-brand fw-bold text-primary" href="/cafeyc/">
+        <a class="navbar-brand fw-bold" style="color:rgba(91, 46, 2, 0.9);" href="/cafeyc/">
             <i class="fas fa-coffee me-2"></i>CaféYC
         </a>
         
@@ -61,14 +61,13 @@ if (isLoggedIn() && isset($_SESSION['cart'])) {
                     </li>
                 <?php else: ?>
                     <li class="nav-item me-2">
-                        <a class="btn btn-outline-primary" href="/cafeyc/auth/login.php">
-                            <i class="fas fa-sign-in-alt me-1"></i>Login
-                        </a>
-                    </li>
+    <a class="btn" style="color: #8B4513; border: 2px solid #8B4513;" href="/cafeyc/auth/login.php">
+        <i class="fas fa-sign-in-alt me-1"></i>Login
+    </a>
+</li>
                     <li class="nav-item">
-                        <a class="btn btn-primary text-white" href="/cafeyc/auth/register.php">
-                            <i class="fas fa-user-plus me-1"></i>Register
-                        </a>
+                        <a class="btn text-white" style="background-color: #8B4513;" href="/cafeyc/auth/register.php">
+    <i class="fas fa-user-plus me-1"></i>Register</a>
                     </li>
                 <?php endif; ?>
             </ul>

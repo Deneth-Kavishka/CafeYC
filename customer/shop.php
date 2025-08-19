@@ -51,7 +51,7 @@ $page_title = "Shop - CaféYC";
     <!-- Page Header -->
     <div class="row mb-4">
         <div class="col-12">
-            <h1 class="fw-bold text-primary">
+            <h1 class="fw-bold" style="color:rgba(91, 46, 2, 0.9);">
                 <i class="fas fa-store me-2"></i>Our Coffee Shop
             </h1>
             <p class="lead text-muted">Discover our premium selection of coffee, pastries, and more</p>
@@ -75,7 +75,7 @@ $page_title = "Shop - CaféYC";
                         </option>
                     <?php endforeach; ?>
                 </select>
-                <button type="submit" class="btn btn-primary">
+                <button type="submit" class="btn" style="color: #8B4513; border: 2px solid #8B4513;">
                     <i class="fas fa-search"></i>
                 </button>
                 <?php if (isset($_GET['search']) || isset($_GET['category'])): ?>
@@ -105,7 +105,10 @@ $page_title = "Shop - CaféYC";
                     <div class="card product-card h-100 shadow-sm border-0">
                         <div class="position-relative">
                             <img src="<?php echo htmlspecialchars($product['image_url']); ?>" 
-                                 class="card-img-top product-image" alt="<?php echo htmlspecialchars($product['name']); ?>">
+     class="card-img-top product-image object-fit-cover" 
+     alt="<?php echo htmlspecialchars($product['name']); ?>"
+     style="height: 220px; width: 100%; object-fit: cover;">
+
                             
                             <?php if ($product['has_deal']): ?>
                                 <div class="position-absolute top-0 end-0 m-2">
@@ -134,12 +137,12 @@ $page_title = "Shop - CaféYC";
                                     <?php if ($product['has_deal']): ?>
                                         <div>
                                             <span class="text-decoration-line-through text-muted">LKR<?php echo number_format($product['price'], 2); ?></span>
-                                            <span class="fs-5 fw-bold text-primary ms-1">
+                                            <span class="fs-5 fw-bold ms-1" style="color: #4c2c05ff;">
                                                 LKR <?php echo number_format($product['price'] * (1 - $product['discount_percentage']/100), 2); ?>
                                             </span>
                                         </div>
                                     <?php else: ?>
-                                        <span class="fs-5 fw-bold text-primary">LKR <?php echo number_format($product['price'], 2); ?></span>
+                                        <span class="fs-5 fw-bold" style="color: #3e1806ff;">LKR <?php echo number_format($product['price'], 2); ?></span>
                                     <?php endif; ?>
                                     
                                     <div class="d-flex align-items-center">
@@ -149,12 +152,19 @@ $page_title = "Shop - CaféYC";
                                 </div>
                                 
                                 <div class="d-flex gap-2">
-                                    <button class="btn btn-primary flex-grow-1 add-to-cart" data-product-id="<?php echo $product['id']; ?>">
-                                        <i class="fas fa-cart-plus me-1"></i>Add to Cart
-                                    </button>
-                                    <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#productModal<?php echo $product['id']; ?>">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
+                               <button class="btn flex-grow-1 add-to-cart"
+        style="background-color: #673009c7; color: white;"
+        data-product-id="<?php echo $product['id']; ?>">
+    <i class="fas fa-cart-plus me-1"></i>Add to Cart
+</button>
+
+                                    <button class="btn" 
+        style="border: 1px solid brown; color: brown; background-color: transparent;" 
+        data-bs-toggle="modal" 
+        data-bs-target="#productModal<?php echo $product['id']; ?>">
+    <i class="fas fa-eye"></i>
+</button>
+
                                 </div>
                             </div>
                         </div>
@@ -200,11 +210,11 @@ $page_title = "Shop - CaféYC";
                                                     <span class="badge bg-danger ms-2"><?php echo $product['discount_percentage']; ?>% OFF</span>
                                                 </div>
                                             <?php else: ?>
-                                                <div class="fs-4 fw-bold text-primary mb-2">LKR <?php echo number_format($product['price'], 2); ?></div>
+                                                <div class="fs-4 fw-bold mb-2" style= "color: #673009c7">LKR <?php echo number_format($product['price'], 2); ?></div>
                                             <?php endif; ?>
                                         </div>
                                         
-                                        <button class="btn btn-primary btn-lg w-100 add-to-cart" data-product-id="<?php echo $product['id']; ?>">
+                                        <button class="btn btn-lg w-100 add-to-cart" style= "background-color: #673009c7; color: white;" data-product-id="<?php echo $product['id']; ?>">
                                             <i class="fas fa-cart-plus me-2"></i>Add to Cart
                                         </button>
                                     </div>
