@@ -4,7 +4,7 @@
 
 > A comprehensive Point of Sale (POS) and E-Commerce management system tailored for premium café and coffee shops in Sri Lanka.
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Overview](#overview)
 - [Features](#features)
@@ -26,7 +26,7 @@
 
 ---
 
-## 🎯 Overview
+## Overview
 
 **CaféYC** is an integrated platform designed to streamline operations for modern café businesses. It combines a professional Point of Sale system for in-store transactions with a full-featured e-commerce platform for online orders, managing everything from inventory and customer relationships to analytics and promotional campaigns.
 
@@ -34,9 +34,9 @@ Built specifically for Sri Lankan businesses using local currency (LKR) and loca
 
 ---
 
-## ✨ Features
+## Features
 
-### 🛍️ E-Commerce Platform
+### E-Commerce Platform
 - **Product Catalog Management**
   - Browse featured products and new arrivals
   - Advanced product filtering and search
@@ -57,7 +57,7 @@ Built specifically for Sri Lankan businesses using local currency (LKR) and loca
   - Dynamic pricing display
   - Featured product highlighting
 
-### 🏪 Point of Sale (POS) System
+### Point of Sale (POS) System
 - **Sales Management**
   - Quick-access product selection
   - Real-time inventory updates
@@ -70,7 +70,7 @@ Built specifically for Sri Lankan businesses using local currency (LKR) and loca
   - Order fulfillment management
   - Order history and records
 
-### 👥 Customer Management
+### Customer Management
 - **Customer Portal**
   - User registration and authentication
   - Order history and tracking
@@ -84,7 +84,7 @@ Built specifically for Sri Lankan businesses using local currency (LKR) and loca
   - Feedback and review management
   - Featured customer testimonials
 
-### 📊 Admin Dashboard
+### Admin Dashboard
 - **Inventory Management**
   - Real-time stock tracking
   - Low stock alerts
@@ -105,7 +105,7 @@ Built specifically for Sri Lankan businesses using local currency (LKR) and loca
   - Category and brand management
   - System user management
 
-### 👨‍💼 Role-Based Access Control
+### Role-Based Access Control
 - **Admin**: Full system access with management capabilities
 - **Cashier**: POS and sales operations
 - **Kitchen**: Order preparation and fulfillment
@@ -113,7 +113,7 @@ Built specifically for Sri Lankan businesses using local currency (LKR) and loca
 
 ---
 
-## 💻 Technology Stack
+## Technology Stack
 
 | Layer | Technology |
 |-------|-----------|
@@ -127,7 +127,7 @@ Built specifically for Sri Lankan businesses using local currency (LKR) and loca
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 CafeYC/
@@ -199,7 +199,7 @@ CafeYC/
 
 ---
 
-## ⚙️ Requirements
+## Requirements
 
 - **Server**: Apache 2.4+ or Nginx
 - **PHP**: 7.4 or higher
@@ -213,7 +213,7 @@ CafeYC/
 
 ---
 
-## 📦 Installation
+## Installation
 
 ### Step 1: Download & Extract
 ```bash
@@ -274,7 +274,7 @@ http://localhost/CafeYC/
 
 ---
 
-## 🔧 Configuration
+## Configuration
 
 ### Database Configuration
 Edit `config/database.php`:
@@ -310,7 +310,7 @@ define('MIN_ORDER_AMOUNT', 500); // LKR 500
 
 ---
 
-## 🗄️ Database Setup
+## Database Setup
 
 The database is automatically created with the following tables:
 
@@ -332,11 +332,11 @@ The database is automatically created with the following tables:
 - **Cashier**: cashier@cafeyc.com / password123
 - **Kitchen**: kitchen@cafeyc.com / password123
 
-⚠️ **Security Warning**: Change these credentials immediately after installation!
+**Security Warning**: Change these credentials immediately after installation!
 
 ---
 
-## 👥 User Roles
+## User Roles
 
 ### Admin Role
 - Full system access
@@ -373,7 +373,7 @@ The database is automatically created with the following tables:
 
 ---
 
-## 🚀 Usage Guide
+## Usage Guide
 
 ### For Customers
 
@@ -448,7 +448,7 @@ The database is automatically created with the following tables:
 
 ---
 
-## 🔌 API Documentation
+## API Documentation
 
 ### Cart API (`api/cart.php`)
 
@@ -485,7 +485,7 @@ GET /api/orders.php?order_id=123
 
 ---
 
-## 🔒 Security
+## Security
 
 ### Password Security
 - Passwords are hashed using bcrypt (`password_hash()` with PASSWORD_DEFAULT)
@@ -531,7 +531,7 @@ checkAuth('admin');
 
 ---
 
-## ⚡ Performance
+## Performance
 
 ### Optimization Tips
 
@@ -557,7 +557,7 @@ checkAuth('admin');
 
 ---
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Database Connection Error
 **Problem**: "Connection Error: SQLSTATE..."
@@ -603,7 +603,7 @@ php -m | grep PDO
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions to improve CaféYC! 
 
@@ -622,13 +622,13 @@ We welcome contributions to improve CaféYC!
 
 ---
 
-## 📄 License
+## License
 
-This project is provided as-is for educational and commercial use. 
+This project is provided as-is for educational and commercial use.
 
 ---
 
-## 📞 Contact & Support
+## Contact & Support
 
 - **Project Owner**: [Deneth-Kavishka](https://github.com/Deneth-Kavishka)
 - **Repository**: https://github.com/Deneth-Kavishka/CafeYC
@@ -642,7 +642,7 @@ This project is provided as-is for educational and commercial use.
 
 ---
 
-## 📚 Additional Resources
+## Additional Resources
 
 - [PHP Documentation](https://www.php.net/docs.php)
 - [MySQL Documentation](https://dev.mysql.com/doc/)
@@ -651,7 +651,7 @@ This project is provided as-is for educational and commercial use.
 
 ---
 
-## 🎉 Changelog
+## Changelog
 
 ### Version 1.0.0
 - Initial release
